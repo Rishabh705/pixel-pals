@@ -38,7 +38,7 @@ export default function Home() {
             <p className='mt-6 text-md max-w-prose text-muted-foreground'>
               An innovative app that offers seamless chat and collaborative whiteboard features, enabling you to connect and create effortlessly from any location.
             </p>
-            <SpecialButton link='/' text='Start Chatting Now' Icon={ArrowRight} className=' mt-10' />
+            <SpecialButton link='/chats' text='Start Chatting Now' Icon={ArrowRight} className=' mt-10' />
           </section>
           <section className='hidden lg:block flex-1 relative'>
             <AnimatedSVG />

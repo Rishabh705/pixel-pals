@@ -15,10 +15,10 @@ const Header = () => {
               <BsChatLeftTextFill size={25} />
             </Link>
             <div className='flex justify-between items-center gap-3 lg:gap-5'>
-              <Link to='/' className='text-sm md:text-base text-foreground font-semibold'>
+              <Link to='/login' className='text-sm md:text-base text-foreground font-semibold'>
                 Login
               </Link>
-              <SpecialButton link='/' text='Get Started' className='hidden md:block' />
+              <SpecialButton link='/register' text='Get Started' className='hidden md:block' />
               <Hamburger className='' />
             </div>
           </div>
