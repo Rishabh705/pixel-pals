@@ -4,7 +4,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
-import { personalHelp } from '@/utils/constants'
+import { personalHelp } from '@/lib/constants'
 
 export default function CustomAccordion() {
 

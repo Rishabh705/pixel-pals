@@ -1,26 +1,51 @@
-import { Link, Form, useLoaderData, redirect, useActionData, useNavigation } from "react-router-dom"
-import { loginUser } from "../utils/api"
+import { Link, Form, useLoaderData, useActionData, useNavigation, Navigation , redirect } from "react-router-dom"
+import { loginUser } from "../lib/api"
 import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
+import { AuthState } from "@/lib/types";
+import { login } from "@/rtk/slices/authSlice";
+import { jwtDecode, JwtPayload } from "jwt-decode";
+import { store } from "@/rtk/store";
 
-export async function loader({ request }:{request:any}) {
-    const url = new URL(request.url)
-    const searchParams = url.searchParams.get('message')
+interface JWTPayload extends JwtPayload{
+    UserInfo:{
+        username:string;
+        _id:string
+    }
+}
+
+export async function loader({ request }: { request: Request }) {
+    const url: URL = new URL(request.url)
+    const searchParams: (string | null) = url.searchParams.get('message')
     return searchParams
 }
-export async function action({ request }:{request:Request}) {
-    
+
+export async function action({ request }: { request: Request }) {
+
     try {
-        const pathname = new URL(request.url).searchParams.get("redirectTo") || '/'
-        const form = await request.formData()
-        const username = form.get('username')
-        const password = form.get('password')
+        const pathname: string = new URL(request.url).searchParams.get("redirectTo") || '/'
+        const form: FormData = await request.formData()
+        const username: (FormDataEntryValue | null) = form.get('username')
+        const password: (FormDataEntryValue | null) = form.get('password')
+
+        const res = await loginUser({ username, password })
+
+        //decode the token
+        const decoded: JWTPayload = jwtDecode(res.accessToken)
+
+        const authData: AuthState = {
+            userId:decoded.UserInfo._id,
+            username:decoded.UserInfo.username,
+            token:res.accessToken
+        }
+
+        //store the data in the store
+        store.dispatch(login(authData))
         
-        await loginUser({ username, password })
-        localStorage.setItem("loggedin", String(true))
-        
+        // localStorage.setItem("loggedin", String(true))
+
         return redirect(pathname)
 
     } catch (error:any) {
@@ -33,7 +58,7 @@ export default function Login() {
 
     const message:any = useLoaderData()
     const error:any = useActionData()
-    const status:any = useNavigation()
+    const status:Navigation = useNavigation()
 
     return (
         <div className="flex flex-col items-center pt-16 pb-20 gap-8 px-7">

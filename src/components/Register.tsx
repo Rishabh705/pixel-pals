@@ -1,5 +1,5 @@
-import { Link, Form, redirect, useActionData, useNavigation } from "react-router-dom"
-import { registerUser } from "../utils/api"
+import { Link, Form, redirect, useActionData, useNavigation, Navigation } from "react-router-dom"
+import { registerUser } from "../lib/api"
 import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
@@ -7,10 +7,10 @@ import { FaFacebook } from "react-icons/fa";
 
 export async function action({ request }: { request: Request }) {
   try {
-    const formdata = await request.formData()
-    const username = formdata.get('username')
-    const password1 = formdata.get('password1')
-    const password2 = formdata.get('password2')
+    const formdata:FormData = await request.formData()
+    const username: (FormDataEntryValue | null) = formdata.get('username')
+    const password1: (FormDataEntryValue | null) = formdata.get('password1')
+    const password2: (FormDataEntryValue | null) = formdata.get('password2')
 
     if (password1 !== password2)
       throw new Error("Passwords should match")
@@ -28,7 +28,7 @@ export async function action({ request }: { request: Request }) {
 
 export default function Register() {
   const error: any = useActionData()
-  const status: any = useNavigation()
+  const status: Navigation = useNavigation()
 
   return (
     <div className="flex flex-col items-center pt-16 pb-20 gap-8 px-7">

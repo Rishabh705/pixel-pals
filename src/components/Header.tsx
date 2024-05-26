@@ -1,8 +1,7 @@
 import MaxWidthWrapper from './MaxWidthWrapper';
 import { Link } from 'react-router-dom';
-import Hamburger from './Hamburger';
 import { BsChatLeftTextFill } from "react-icons/bs";
-import SpecialButton from './SpecialButton';
+import Profile from './Profile';
 
 const Header = () => {
   return (
@@ -14,13 +13,7 @@ const Header = () => {
               <h2 className='hidden md:block text-3xl text-primary font-bold font-comforta'>Pixel Pals</h2>
               <BsChatLeftTextFill size={25} />
             </Link>
-            <div className='flex justify-between items-center gap-3 lg:gap-5'>
-              <Link to='/login' className='text-sm md:text-base text-foreground font-semibold'>
-                Login
-              </Link>
-              <SpecialButton link='/register' text='Get Started' className='hidden md:block' />
-              <Hamburger className='' />
-            </div>
+            <Profile/>
           </div>
         </MaxWidthWrapper>
       </header>

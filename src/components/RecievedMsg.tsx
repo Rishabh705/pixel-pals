@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-export default function RecievedMsg({ text, user, time }: { text: string; user: string; time: string }) {
+export default function RecievedMsg({ text, participant, time }: { text: string; participant: string; time: string }) {
 
     function extractTime(isoString:string): string{
         const dateObj = new Date(isoString)
@@ -21,7 +21,7 @@ export default function RecievedMsg({ text, user, time }: { text: string; user: 
                     <p className='text-foreground text-sm font-medium'>{text}</p>
                 </div>
                 <div className="flex justify-start items-center gap-1">
-                    <h5 className="text-primary-forground text-xs font-semibold">{user}</h5>
+                    <h5 className="text-primary-forground text-xs font-semibold">{participant}</h5>
                     <span className="text-secondary-forground">🞄</span>
                     <p className="text-primary-forground text-xs font-semibold">{msgTime}</p>
                 </div>
