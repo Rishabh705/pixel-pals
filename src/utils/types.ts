@@ -75,3 +75,11 @@ export interface User {
     individualChats: IndividualChatData[];
     groupChats: GroupChatData[];
   }
+
+  export interface SocketMessage {
+    _id: string;
+    chatId: string;
+    sender:User;
+    message: string;
+    createdAt: string;
+  }

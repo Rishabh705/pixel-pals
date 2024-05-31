@@ -111,15 +111,20 @@ export async function getChat(chatID: string, token:string): Promise<any> {
     return data
 }
 
-export async function sendMessage(recieverID: string, message: FormDataEntryValue | null, chatID:string, token:string): Promise<any> {
+export async function sendMessage(message: string, token:string, chatID?:string) : Promise<any> {
+    let method='POST'
+
+    if(chatID){
+        method = "PUT"
+    }
+
     const options = {
-        method: 'POST',
+        method: method,
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ 
-            recieverID: recieverID,
             message: message
          })
     }

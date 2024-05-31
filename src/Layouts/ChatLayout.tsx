@@ -3,13 +3,17 @@ import { Outlet, defer, useLoaderData, Await, Link } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CiSearch } from "react-icons/ci";
-import { TbFaceIdError, TbHexagonPlusFilled } from "react-icons/tb";
+import { TbFaceIdError } from "react-icons/tb";
+import { BsThreeDotsVertical } from "react-icons/bs";
 import { store } from "@/rtk/store";
 import '../styles/chatlayout.css'
 import { getChats } from "@/lib/api";
 import { requireAuth } from "@/lib/requireAuth";
-import { ChatData, GroupChatData, IndividualChatData, User } from "@/lib/types";
+import { ChatData, GroupChatData, IndividualChatData, User } from "@/utils/types";
 import { useAppSelector } from "@/rtk/hooks";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import NewChat from "@/components/NewChat";
 
 export async function loader({ request }: { request: Request }) {
     await requireAuth(request)
@@ -27,69 +31,74 @@ export default function ChatLayout() {
     const data: any = useLoaderData()
     const results = data.data
     const [searchText, setSearchText] = React.useState<string>("")
-    // const [newChat, setNewChat] = React.useState<boolean>(false)
 
-    const renderCards = ({ data }:{data: ChatData}) => {
-            
+    const renderCards = ({ data }: { data: ChatData }) => {
+
         const userId: string | null = useAppSelector((state) => state.auth.userId);
-        
-        const individualChatCards: JSX.Element[] = data.individualChats.map((chat: IndividualChatData) => {
-                
-                const displayAvatar: string = "https://github.com/shadcn.png";
-                const otherParticipant: User | undefined = chat.chat.participants?.find(
-                    (participant: User) => participant._id !== userId
-                );
-                const sender:string = chat.chat.lastMessage.sender.username;
-                const lastMessage:string = chat.chat.lastMessage.message;
 
-                return (
+        const individualChatCards: JSX.Element[] = data.individualChats.map((chat: IndividualChatData) => {
+
+            const displayAvatar: string = "https://github.com/shadcn.png";
+            const otherParticipant: User | undefined = chat.chat.participants?.find(
+                (participant: User) => participant._id !== userId
+            );
+            const sender: string = chat.chat.lastMessage.sender.username;
+            const lastMessage: string = chat.chat.lastMessage.message;
+
+            return (
+                <>
                     <Link
                         to={`${chat._id}?re=${otherParticipant?._id}`}
                         key={chat._id}
-                        className="py-4 px-4 md:px-6 lg:px-8 border-b-2 border-r-2 bg-card flex items-center gap-4 hover:bg-secondary hover:cursor-pointer"
+                        className="py-4 md:px-2 lg:px-4 bg-secondary flex items-center gap-4 hover:bg-background hover:cursor-pointer rounded-xl"
                     >
                         <Avatar>
                             <AvatarImage src={displayAvatar} />
                             <AvatarFallback>{otherParticipant?.username}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <h2 className="text-md font-semibold text-card-foreground">
+                            <h2 className="text-md font-semibold text-secondary-foreground">
                                 {otherParticipant?.username}
                             </h2>
-                            <p className="text-sm font-medium text-card-foreground">
+                            <p className="text-sm font-medium text-secondary-foreground">
                                 {sender}: {lastMessage}
                             </p>
                         </div>
                     </Link>
-                );
-            }
+                    <Separator />
+                </>
+            );
+        }
         );
 
         const groupChatCards: JSX.Element[] = data.groupChats.map((chat: GroupChatData) => {
-            
+
             const displayAvatar: string = "https://github.com/shadcn.png";
-            const sender:string = chat.chat.lastMessage.sender.username;
-            const lastMessage:string = chat.chat.lastMessage.message;
+            const sender: string = chat.chat.lastMessage.sender.username;
+            const lastMessage: string = chat.chat.lastMessage.message;
 
             return (
-                <Link
-                    to={`${chat._id}`}
-                    key={chat._id}
-                    className="py-4 px-4 md:px-6 lg:px-8 border-b-2 border-r-2 bg-card flex items-center gap-4 hover:bg-secondary hover:cursor-pointer"
-                >
-                    <Avatar>
-                        <AvatarImage src={displayAvatar} />
-                        <AvatarFallback>{chat.chat.name}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <h2 className="text-md font-semibold text-card-foreground">
-                            {chat.chat.name}
-                        </h2>
-                        <p className="text-sm font-medium text-card-foreground">
-                            {sender}: {lastMessage}
-                        </p>
-                    </div>
-                </Link>
+                <>
+                    <Link
+                        to={`${chat._id}`}
+                        key={chat._id}
+                        className="py-4 md:px-2 lg:px-4 bg-secondary flex items-center gap-4 hover:bg-background hover:cursor-pointer hover:rounded-xl"
+                    >
+                        <Avatar>
+                            <AvatarImage src={displayAvatar} />
+                            <AvatarFallback>{chat.chat.name}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h2 className="text-md font-semibold text-secondary-foreground">
+                                {chat.chat.name}
+                            </h2>
+                            <p className="text-sm font-medium text-secondary-foreground">
+                                {sender}: {lastMessage}
+                            </p>
+                        </div>
+                    </Link>
+                    <Separator />
+                </>
             );
         });
 
@@ -100,42 +109,50 @@ export default function ChatLayout() {
                 {allCards.length > 0 ? (
                     allCards
                 ) : (
-                    <div className="flex flex-col gap-2 justify-center items-center h-96">
+                    <div className="flex flex-col gap-2 justify-center items-center h-96 ">
                         <TbFaceIdError size={40} color="#858687" />
-                        <p className="text-muted-foreground">No messages found</p>
+                        <p className="text-muted-foreground">No chats yet</p>
                     </div>
                 )}
             </>
         );
-    }; return (
+    }
+    return (
         <div className="flex h-screen border-b-2">
-            <div className="flex flex-col w-1/4 min-w-72 max-w-96 relative">
-                <section className="flex gap-4 justify-start py-5 px-4 md:px-6 lg:px-8 items-center border-r-2 border-b-2">
-                    <Avatar>
-                        <AvatarImage src="https://github.com/shadcn.png" />
-                        <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <h1 className="text-md font-semibold text-card-foreground">RAZOR</h1>
-                        <p className="text-md font-medium text-card-foreground">@47razor</p>
+            <div className="hidden lg:flex lg:flex-col w-1/4 min-w-72 max-w-96 bg-secondary border-r-2 ">
+                <section className="flex items-center justify-between border-b-2">
+                    <div className="flex gap-4 justify-start py-5 px-2 md:px-4 lg:px-6 items-center ">
+                        <Avatar>
+                            <AvatarImage src="https://github.com/shadcn.png" />
+                            <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h1 className="text-md font-semibold text-card-foreground">RAZOR</h1>
+                            <p className="text-md font-medium text-card-foreground">@47razor</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 px-3 items-center">
+                        <NewChat className="hover:bg-background hover:rounded-full hover:cursor-pointer p-3"/>
+                        <span className="hover:bg-background hover:rounded-full hover:cursor-pointer p-3"><BsThreeDotsVertical size={22} /></span>
                     </div>
                 </section>
-                <section className="py-5 px-4 md:px-6 lg:px-8 flex items-center border-b-2 border-r-2">
-                    <span className="h-full flex items-center pl-2 rounded-l-full bg-slate-100">
+                <section className="py-5 px-2 md:px-4 lg:px-6 flex items-center border-b-2">
+                    <span className="h-full flex items-center pl-2 rounded-l-full bg-background">
                         <CiSearch size={20} color="#858687" />
                     </span>
-                    <Input className="rounded-r-full border-none active:border-none bg-slate-100" placeholder="Search a text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+                    <Input className="rounded-r-full border-none active:border-none bg-background" placeholder="Search a text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
                 </section>
-                <section className="flex flex-col overflow-y-scroll scrollbar">
+                <section className="flex flex-col gap-2 overflow-y-scroll scrollbar p-2">
                     <Suspense fallback={
                         <>
                             {
-                                Array.from({ length: 5 }).map((_, index) => (
-                                    <div key={index} className="py-4 px-4 md:px-6 lg:px-8  border-b-2 border-r-2 bg-card flex items-center gap-4 hover:bg-secondary hover:cursor-pointer">
-                                        <span className="rounded-full p-3" />
-                                        <div>
-                                            <span className="text-md font-semibold text-card-foreground" />
-                                            <span className="text-sm font-medium text-card-foreground" />
+                                Array.from({ length: 8 }).map((_, index) => (
+                                    <div key={index} className="py-4 px-4 bg-card flex items-center gap-4 rounded-xl hover:bg-secondary hover:cursor-pointer">
+                                        <Skeleton className="rounded-full p-5" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="p-1 w-[200px]" />
+                                            <Skeleton className="p-1 w-[250px]" />
+                                            <Skeleton className="p-1 w-[150px]" />
                                         </div>
                                     </div>
                                 ))
@@ -147,9 +164,6 @@ export default function ChatLayout() {
                         </Await>
                     </Suspense>
                 </section>
-                <span className="bg-primary inline-block rounded-lg p-2 absolute right-5 bottom-5 hover:cursor-pointer">
-                    <TbHexagonPlusFilled size={30} />
-                </span>
             </div>
             <Outlet />
         </div>

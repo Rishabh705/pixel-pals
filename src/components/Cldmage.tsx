@@ -10,7 +10,7 @@ const cld:Cloudinary = new Cloudinary({
   },
 });
 
-const CldImage = ({ publicId }) => {
+const CldImage = ({ publicId }:{publicId?:string}) => {
   const myImage = cld
     .image(publicId)
     .resize(thumbnail().width(300).height(300).gravity(autoGravity()))

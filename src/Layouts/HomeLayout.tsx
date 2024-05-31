@@ -4,7 +4,7 @@ import Footer from '../components/Footer'
 export default function HomeLayout() {
   return (
     <>
-      <Header />
+      {/* <Header /> */}
       <Outlet />
       <Footer/>
     </>

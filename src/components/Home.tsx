@@ -2,11 +2,11 @@ import AnimatedSVG from './AnimatedSVG';
 import MaxWidthWrapper from './MaxWidthWrapper';
 import SpecialButton from './SpecialButton';
 import OptionsCards from './OptionsCards';
-import { options } from '@/lib/constants';
+import { options } from '@/utils/constants';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import CustomAccordion from './CustomAccordion';
-import { reviews } from "@/lib/constants"
+import { reviews } from "@/utils/constants"
 import { ReviewCard } from './ReviewCard';
 import { useAppSelector } from '@/rtk/hooks';
 

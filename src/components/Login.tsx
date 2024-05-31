@@ -4,7 +4,7 @@ import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
-import { AuthState } from "@/lib/types";
+import { AuthState } from "@/utils/types";
 import { login } from "@/rtk/slices/authSlice";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { store } from "@/rtk/store";
