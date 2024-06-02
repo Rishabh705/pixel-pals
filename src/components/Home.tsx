@@ -8,7 +8,6 @@ import { Button } from './ui/button';
 import CustomAccordion from './CustomAccordion';
 import { reviews } from "@/utils/constants"
 import { ReviewCard } from './ReviewCard';
-import { useAppSelector } from '@/rtk/hooks';
 
 const ArrowRight = () => (
   <span className='ml-2'>
@@ -17,7 +16,6 @@ const ArrowRight = () => (
 );
 
 export default function Home() {
-  const userId:(string|null) = useAppSelector((state)=>state.auth.userId)
 
   const optionsCard: JSX.Element[] = options.map(option => {
     return (

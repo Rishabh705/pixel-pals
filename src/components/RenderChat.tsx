@@ -6,7 +6,7 @@ import { Input } from "./ui/input";
 import SentMsg from "./SentMsg";
 import RecievedMsg from "./RecievedMsg";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
-import { Await, Form } from "react-router-dom";
+import { Await, Form, useSearchParams } from "react-router-dom";
 import { DetailedChatData, Message, SocketMessage } from "@/utils/types";
 import { socket } from "@/lib/socket"
 import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
@@ -16,7 +16,10 @@ export default function RenderChat({results, method, chatId}:{results?:any, meth
     const currentUser: (string | null) = useAppSelector((state) => state.auth.userId)
     const dispatch = useAppDispatch()
     const socketMessages: SocketMessage[] = useAppSelector((state) => state.socketMsgs)
-  
+    const [searchParams] = useSearchParams()
+
+    const name:string = searchParams.get('name') || 'Title'
+
     useEffect(() => {
       const handleMessage = (data: SocketMessage) => {
         dispatch(setSocketMsg(data))
@@ -33,8 +36,13 @@ export default function RenderChat({results, method, chatId}:{results?:any, meth
         socket.off('receive-message', handleMessage);
       };
     }, [socket, setSocketMsg, socketMessages])
+
+    // const isIndividualChat = (chat: IndividualChat | GroupChat): chat is IndividualChat => {
+    //   return (chat as IndividualChat).participants !== undefined;
+    // };
   
-    const renderCards = ({ data }: { data: DetailedChatData }) => {
+    const renderChats = ({ data }: { data: DetailedChatData }) => {
+      
       const socketMessageIds:Set<string> = new Set(socketMessages.map((msg) => msg._id));
   
       // Filter out messages from data.chat.messages that have the same ID as socketMessages
@@ -78,9 +86,9 @@ export default function RenderChat({results, method, chatId}:{results?:any, meth
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-md font-semibold text-card-foreground">RAZOR</h1>
-            <p className="text-md font-medium text-card-foreground flex items-center">
-              123 Members 🞄 200 Online
+            <h1 className="text-lg font-semibold text-card-foreground">{name}</h1>
+            <p className="text-sm font-medium text-card-foreground flex items-center">
+              typing...
             </p>
           </div>
         </section>
@@ -101,7 +109,7 @@ export default function RenderChat({results, method, chatId}:{results?:any, meth
             </>
           }>
             <Await resolve={results.data}>
-              {renderCards}
+              {renderChats}
             </Await>
           </Suspense>
   

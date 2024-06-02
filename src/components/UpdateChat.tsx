@@ -39,6 +39,7 @@ export async function action({ request, params }: { request: Request, params: an
       message: message,
       sender: {
         _id: id,
+        avatar:'',
         username: username,
       },
       createdAt: today.toISOString()

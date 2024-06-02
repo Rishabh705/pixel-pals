@@ -7,7 +7,7 @@ import Login, { loader as loginLoader, action as loginAction } from "@/component
 import Register, { action as registerAction } from "@/components/Register";
 import About from "@/components/About";
 import Contact from "@/components/Contact";
-import ChatLayout, { loader as chatlayoutLoader } from "./Layouts/ChatLayout";
+import ChatLayout, { loader as chatlayoutLoader, action as chatlayoutAction } from "./Layouts/ChatLayout";
 import UpdateChat, { loader as updateChatLoader, action as updateChatAction } from "@/components/UpdateChat";
 import ChatHome from "@/components/ChatHome";
 
@@ -22,7 +22,7 @@ function App() {
         <Route path="register" element={<Register />} action={registerAction} />
         <Route path="*" element={<Error />} />
       </Route>
-      <Route path="/chats" element={<ChatLayout />} loader={chatlayoutLoader}>
+      <Route path="/chats" element={<ChatLayout />} loader={chatlayoutLoader} action={chatlayoutAction}>
         <Route index element={<ChatHome />} loader={async ({ request }) => {
           await requireAuth(request);
           return null;

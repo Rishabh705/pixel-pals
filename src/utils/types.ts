@@ -8,6 +8,7 @@ export interface AuthState {
 export interface User {
     _id: string;
     username: string;
+    avatar: string;
   }
   
   // Define the type for a Message
