@@ -81,6 +81,11 @@ export interface User {
     _id: string;
     chatId: string;
     sender:User;
+    receiver: User;
     message: string;
     createdAt: string;
+  }
+
+  export interface SocketChat{
+    
   }

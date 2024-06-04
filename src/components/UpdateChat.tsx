@@ -42,6 +42,11 @@ export async function action({ request, params }: { request: Request, params: an
         avatar:'',
         username: username,
       },
+      receiver:{
+        _id: res.newMessage.receiver._id,
+        avatar: res.newMessage.receiver.avatar,
+        username: res.newMessage.receiver.username
+      },
       createdAt: today.toISOString()
     }
     store.dispatch(setSocketMsg(data))

@@ -1,5 +1,5 @@
-import React, { Suspense } from "react";
-import { Outlet, defer, useLoaderData, Await, Link, useActionData } from "react-router-dom"
+import React, { Suspense, useEffect } from "react";
+import { Outlet, defer, useLoaderData, Await, useActionData } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CiSearch } from "react-icons/ci";
@@ -9,11 +9,14 @@ import { store } from "@/rtk/store";
 import '../styles/chatlayout.css'
 import { addContact, getChats, getContacts } from "@/lib/api";
 import { requireAuth } from "@/lib/requireAuth";
-import { ChatData, GroupChatData, IndividualChatData, User } from "@/utils/types";
-import { useAppSelector } from "@/rtk/hooks";
+import { ChatData, GroupChatData, IndividualChat, IndividualChatData, SocketMessage, User } from "@/utils/types";
+import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import NewChat from "@/components/NewChat";
+import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
+import ChatCard from "@/components/ChatCard";
+import { socket } from "@/lib/socket";
+import { Socket } from "socket.io-client";
 
 export async function loader({ request }: { request: Request }) {
     await requireAuth(request)
@@ -51,15 +54,72 @@ export default function ChatLayout() {
     const error: any = useActionData()
     const username: (string | null) = useAppSelector((state) => state.auth.username)
     const userId: string | null = useAppSelector((state) => state.auth.userId);
-
+    const socketMessages: SocketMessage[] = useAppSelector((state) => state.socketMsgs);
+    const dispatch = useAppDispatch()
     const results = data.data
 
-    const [searchText, setSearchText] = React.useState<string>("")
+    const [searchText, setSearchText] = React.useState<string>("");
+
+    useEffect(() => {
+        const handleMessage = (data: SocketMessage) => {
+            dispatch(setSocketMsg(data));
+        };
+
+        const elem = document.querySelector('.data');
+        if (elem) {
+            elem.scrollTop = elem.scrollHeight;
+        }
+
+        socket.on('receive-message', handleMessage);
+
+        return () => {
+            socket.off('receive-message', handleMessage);
+        };
+    }, [dispatch]);
 
     const renderCards = ({ data }: { data: ChatData }) => {
 
+        const socketMessageChatIds:Set<string> = new Set(socketMessages.map((msg) => msg.chatId));
+        
+        const filteredIndiChats:IndividualChatData[] = data.individualChats.filter((chat:IndividualChatData)=>{
+            return !socketMessageChatIds.has(chat._id)
+        })||[];
 
-        const individualChatCards: JSX.Element[] = data.individualChats
+        const filteredGropChats:GroupChatData[] = data.groupChats.filter((chat:GroupChatData)=>{
+            return !socketMessageChatIds.has(chat._id)
+        }) || []
+
+        const filteredSocketChats:SocketMessage[] = socketMessages.filter((msg:SocketMessage)=>{
+            return socketMessageChatIds.has(msg.chatId)
+        })    
+    
+
+        const socketMessageCards: JSX.Element[] = filteredSocketChats
+        .filter((msg:SocketMessage) => {
+            const otherParticipant: User = msg.sender._id === userId ? msg.receiver : msg.sender;
+            return otherParticipant?.username.toLowerCase().includes(searchText.toLowerCase());
+        })
+        .map((msg: SocketMessage) => {
+            const sender: string = msg.sender?.username || "Unknown";
+            const lastMessage: string = msg.message || "No messages yet";
+            const subtitle = sender.toLowerCase() === username?.toLowerCase()
+                ? `You: ${lastMessage}`
+                : `${sender}: ${lastMessage}`;
+            const otherParticipant: User = msg.sender._id === userId ? msg.receiver : msg.sender;
+
+            return (
+                <ChatCard
+                    chatId={msg.chatId}
+                    link={`${msg.chatId}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
+                    avatarSrc="https://github.com/shadcn.png"
+                    fallbackText={otherParticipant?.username || ""}
+                    title={otherParticipant?.username || ""}
+                    subtitle={subtitle}
+                />
+            )
+        })
+
+        const individualChatCards: JSX.Element[] = filteredIndiChats
             .filter((chat: IndividualChatData) => {
                 const otherParticipant: User | undefined = chat.chat.participants?.find(
                     (participant: User) => participant._id !== userId
@@ -67,86 +127,56 @@ export default function ChatLayout() {
                 return otherParticipant?.username.toLowerCase().includes(searchText.toLowerCase());
             })
             .map((chat: IndividualChatData) => {
-
-                const displayAvatar: string = "https://github.com/shadcn.png";
                 const otherParticipant: User | undefined = chat.chat.participants?.find(
                     (participant: User) => participant._id !== userId
                 );
-                const sender: string = chat.chat.lastMessage?.sender?.username;
-                const lastMessage: string = chat.chat.lastMessage?.message;
+                const sender: string | undefined = chat.chat.lastMessage?.sender?.username;
+                const lastMessage: string | undefined = chat.chat.lastMessage?.message;
+                const subtitle = sender
+                    ? sender.toLowerCase() === username?.toLowerCase()
+                        ? `You: ${lastMessage}`
+                        : `${sender}: ${lastMessage}`
+                    : "No messages yet";
 
                 return (
-                    <div key={chat._id} className="space-y-2">
-                        <Link
-                            to={`${chat._id}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
-                            className="py-4 md:px-2 lg:px-4 bg-secondary flex items-center gap-4 hover:bg-background hover:cursor-pointer rounded-xl"
-                        >
-                            <Avatar>
-                                <AvatarImage src={displayAvatar} />
-                                <AvatarFallback>{otherParticipant?.username}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h2 className="text-md font-semibold text-secondary-foreground">
-                                    {otherParticipant?.username}
-                                </h2>
-                                <p className="text-sm font-medium text-secondary-foreground">
-                                    {
-                                        sender
-                                            ? sender.toLowerCase() === username?.toLowerCase()
-                                                ? `You: ${lastMessage}`
-                                                : `${sender}: ${lastMessage}`
-                                            : "No messages yet"
-                                    }
-                                </p>
-                            </div>
-                        </Link>
-                        <Separator />
-                    </div>
+                    <ChatCard
+                        chatId={chat._id}
+                        link={`${chat._id}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
+                        avatarSrc="https://github.com/shadcn.png"
+                        fallbackText={otherParticipant?.username || ""}
+                        title={otherParticipant?.username || ""}
+                        subtitle={subtitle}
+                    />
                 );
-            }
-            );
+            });
 
-        const groupChatCards: JSX.Element[] = data.groupChats
+        const groupChatCards: JSX.Element[] = filteredGropChats
             .filter((chat: GroupChatData) => {
                 return chat.chat.name.toLowerCase().includes(searchText.toLowerCase());
             })
             .map((chat: GroupChatData) => {
-
-                const displayAvatar: string = "https://github.com/shadcn.png";
-                const sender: string = chat.chat.lastMessage.sender.username;
-                const lastMessage: string = chat.chat.lastMessage.message;
+                const sender: string | undefined = chat.chat.lastMessage?.sender?.username;
+                const lastMessage: string | undefined = chat.chat.lastMessage?.message;
+                const subtitle = sender
+                    ? sender.toLowerCase() === username?.toLowerCase()
+                        ? "You: " + lastMessage
+                        : sender + ": " + lastMessage
+                    : "No messages yet";
 
                 return (
-                    <div key={chat._id} className="space-y-2">
-                        <Link
-                            to={`${chat._id}?name=${chat.chat.name}`}
-                            className="py-4 md:px-2 lg:px-4 bg-secondary flex items-center gap-4 hover:bg-background hover:cursor-pointer hover:rounded-xl"
-                        >
-                            <Avatar>
-                                <AvatarImage src={displayAvatar} />
-                                <AvatarFallback>{chat.chat.name}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h2 className="text-md font-semibold text-secondary-foreground">
-                                    {chat.chat.name}
-                                </h2>
-                                <p className="text-sm font-medium text-secondary-foreground">
-                                    {
-                                        sender
-                                            ? sender.toLowerCase() === username?.toLowerCase()
-                                                ? "You: " + lastMessage
-                                                : sender + ": " + lastMessage
-                                            : "No messages yet"
-                                    }
-                                </p>
-                            </div>
-                        </Link>
-                        <Separator />
-                    </div>
+                    <ChatCard
+                        chatId={chat._id}
+                        link={`${chat._id}?name=${chat.chat.name}`}
+                        avatarSrc="https://github.com/shadcn.png"
+                        fallbackText={chat.chat.name}
+                        title={chat.chat.name}
+                        subtitle={subtitle}
+                    />
                 );
             });
 
-        const allCards: JSX.Element[] = [...individualChatCards, ...groupChatCards];
+
+        const allCards: JSX.Element[] = [...socketMessageCards, ...individualChatCards, ...groupChatCards];
 
         return (
             <>
@@ -186,7 +216,7 @@ export default function ChatLayout() {
                     </span>
                     <Input className="rounded-r-full border-none active:border-none bg-background" placeholder="Search a text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
                 </section>
-                <section className="flex flex-col gap-2 overflow-y-scroll scrollbar p-2">
+                <section className="flex flex-col gap-2 overflow-y-scroll scrollbar p-2 data">
                     <Suspense fallback={
                         <>
                             {

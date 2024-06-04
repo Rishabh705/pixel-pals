@@ -9,7 +9,14 @@ export const socketMsgSlice = createSlice({
     initialState,
     reducers:{
         setSocketMsg: (state, action: PayloadAction<SocketMessage>) =>{
-            return [...state, action.payload]
+            const index = state.findIndex(item => item.chatId === action.payload.chatId);
+            if (index !== -1) {
+                // If found, replace the item
+                state[index] = action.payload;
+            } else {
+                // If not found, add the new item to the state
+                state.push(action.payload);
+            }
         }
     }
 })

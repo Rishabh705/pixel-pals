@@ -5,37 +5,32 @@ import { LuPaperclip, LuMic } from "react-icons/lu";
 import { Input } from "./ui/input";
 import SentMsg from "./SentMsg";
 import RecievedMsg from "./RecievedMsg";
-import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
+import { useAppSelector } from "@/rtk/hooks";
 import { Await, Form, useSearchParams } from "react-router-dom";
 import { DetailedChatData, Message, SocketMessage } from "@/utils/types";
 import { socket } from "@/lib/socket"
-import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
 
 export default function RenderChat({results, method, chatId}:{results?:any, method:any, chatId:string}) {
     const scrollRef = useRef(null)
     const currentUser: (string | null) = useAppSelector((state) => state.auth.userId)
-    const dispatch = useAppDispatch()
     const socketMessages: SocketMessage[] = useAppSelector((state) => state.socketMsgs)
     const [searchParams] = useSearchParams()
 
     const name:string = searchParams.get('name') || 'Title'
 
     useEffect(() => {
-      const handleMessage = (data: SocketMessage) => {
-        dispatch(setSocketMsg(data))
-      };
       const elem = document.querySelector('.data')
       if (elem) {
         elem.scrollTop = elem.scrollHeight
       }
   
-      socket.on('receive-message', handleMessage);
+      socket.on('receive-message', ()=>{});
   
       // Cleanup on unmount
       return () => {
-        socket.off('receive-message', handleMessage);
+        socket.off('receive-message', ()=>{});
       };
-    }, [socket, setSocketMsg, socketMessages])
+    }, [socket])
 
     // const isIndividualChat = (chat: IndividualChat | GroupChat): chat is IndividualChat => {
     //   return (chat as IndividualChat).participants !== undefined;
