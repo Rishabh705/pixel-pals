@@ -75,7 +75,7 @@ export default function RenderChat({results, method, chatId}:{results?:any, meth
   
     return (
       <div className='flex-1 flex flex-col'>
-        <section className="flex gap-4 justify-start py-5 px-4 md:px-6 lg:px-8 items-center border-b-2">
+        <section className="flex gap-4 justify-start py-5 px-4 pl-14 md:pl-14 md:px-6 lg:px-8 items-center border-b-2">
           <Avatar>
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>CN</AvatarFallback>

@@ -14,7 +14,7 @@ type ChatCardProps = {
 
 const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackText, title, subtitle }) => (
     <div key={chatId} className="space-y-2">
-        <Link to={link} className="py-4 md:px-2 lg:px-4 bg-secondary flex items-center gap-4 hover:bg-background hover:cursor-pointer rounded-xl">
+        <Link to={link} className="py-4 px-4 bg-secondary flex items-center gap-4 hover:bg-background hover:cursor-pointer rounded-xl">
             <Avatar>
                 <AvatarImage src={avatarSrc} />
                 <AvatarFallback>{fallbackText}</AvatarFallback>

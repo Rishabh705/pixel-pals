@@ -58,7 +58,7 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
 
     return (
       <>
-        <p className="px-4 text-md text-secondary-foreground font-medium">My Contacts</p>
+        <p className="text-md text-secondary-foreground font-medium">My Contacts</p>
         {contactCard }
       </>
     );
@@ -70,10 +70,10 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
       <SheetTrigger className={cn(className)}>
         <BsSendPlusFill size={22} />
       </SheetTrigger>
-      <SheetContent side='left' className="w-1/4 min-w-72 max-w-96 bg-secondary p-2">
+      <SheetContent side='left' className="w-screen lg:w-1/3 lg:min-w-72 bg-secondary lg:p-4">
         <SheetHeader className='flex flex-col gap-4'>
           <div>
-            <div className='flex gap-4  px-4 pr-6 h-full pt-2 pb-2'>
+            <div className='flex gap-4 pr-6 h-full pt-2 pb-2'>
               <SheetTitle>New Chat</SheetTitle>
             </div>
             <Separator />
@@ -81,7 +81,7 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
         </SheetHeader>
 
         <section className='mt-4 flex flex-col gap-2'>
-          <section className="flex px-4">
+          <section className="flex">
             <span className="h-full flex items-center py-2.5 pl-2.5 rounded-l-full bg-background">
               <CiSearch size={20} color="#858687" />
             </span>
