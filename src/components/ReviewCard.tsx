@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-export function ReviewCard({ className, name, position, company, review, avatar }: { className?: string, name: string, position: string, company: string, review: string, avatar?: string }) {
+export function ReviewCard({ className, name, position, company, review }: { className?: string, name: string, position: string, company: string, review: string }) {
     return (
         <Card className={cn(" flex flex-col justify-between", className)}>
             <CardContent className="pt-6">

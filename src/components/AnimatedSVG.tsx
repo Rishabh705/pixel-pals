@@ -1,8 +1,8 @@
 export default function AnimatedSVG() {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 408" preserveAspectRatio="xMidYMid" width="100%" height="408" style={{ shapeRendering: 'auto', display: 'block', background: 'rgb(255, 255, 255)' }}><g data-idx="1"><linearGradient y2="0" y1="0" x2="1" x1="0" id="lg-0.6590519274487807" data-idx="2">
-            <stop offset="0" stop-color="#f97316" data-idx="3"></stop>
-            <stop offset="1" stop-color="#f88331" data-idx="4"></stop>
+            <stop offset="0" stopColor="#f97316" data-idx="3"></stop>
+            <stop offset="1" stopColor="#f88331" data-idx="4"></stop>
         </linearGradient>
             <path opacity="0.4" fill="url(#lg-0.6590519274487807)" d="M 496.025 204 C 496.025 269 358 319.717 296.239 339.717 C 234.478 359.717 110.673 386.805 72.673 334.805 C 34.673 282.805 33.956 124.717 71.956 72.717 C 109.956 20.717 247.132 10.038 308.893 30.038 C 370.654 50.038 496.025 139 496.025 204" data-idx="5">
                 <animate attributeName="d" dur="5s" repeatCount="indefinite" from="M 496.025 204 C 496.025 269 358 319.717 296.239 339.717 C 234.478 359.717 110.673 386.805 72.673 334.805 C 34.673 282.805 33.956 124.717 71.956 72.717 C 109.956 20.717 247.132 10.038 308.893 30.038 C 370.654 50.038 496.025 139 496.025 204" to="M 458.302 204 C 458.302 261.434 355.478 332.088 300.283 350.327 C 245.088 368.566 142.566 355.39 108.849 308.434 C 75.132 261.478 46.981 125.849 80.698 78.893 C 114.415 31.937 241.107 51.899 296.302 69.377 C 351.497 86.855 458.302 146.566 458.302 204" />

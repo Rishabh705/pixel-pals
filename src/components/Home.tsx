@@ -17,12 +17,12 @@ const ArrowRight = () => (
 
 export default function Home() {
 
-  const optionsCard = options.map(option => {
+  const optionsCard: JSX.Element[] = options.map(option => {
     return (
       <OptionsCards key={option.id} img={option.img} title={option.title} desc={option.desc} color={option.color} />
     )
   })
-  const reviewCards = reviews.map(review => {
+  const reviewCards: JSX.Element[] = reviews.map(review => {
     return (
       <ReviewCard key={review.id} name={review.name} position={review.position} company={review.company} review={review.review}/>
     )
@@ -38,7 +38,7 @@ export default function Home() {
             <p className='mt-6 text-md max-w-prose text-muted-foreground'>
               An innovative app that offers seamless chat and collaborative whiteboard features, enabling you to connect and create effortlessly from any location.
             </p>
-            <SpecialButton link='/' text='Start Chatting Now' Icon={ArrowRight} className=' mt-10' />
+            <SpecialButton link={`/chats`} text='Start Chatting Now' Icon={ArrowRight} className=' mt-10' />
           </section>
           <section className='hidden lg:block flex-1 relative'>
             <AnimatedSVG />
