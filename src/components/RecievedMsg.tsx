@@ -16,9 +16,9 @@ export default function RecievedMsg({ text, participant, time }: { text: string;
                 <AvatarImage src="https://github.com/shadcn.png" />
                 <AvatarFallback>CN</AvatarFallback>
             </Avatar>
-            <div>
+            <div className="max-w-xl">
                 <div className='bg-background p-2 rounded-r-xl rounded-tl-xl'>
-                    <p className='text-foreground text-sm font-medium'>{text}</p>
+                    <p className='text-foreground text-sm font-medium break-all'>{text}</p>
                 </div>
                 <div className="flex justify-start items-center gap-1">
                     <h5 className="text-primary-forground text-xs font-semibold">{participant}</h5>

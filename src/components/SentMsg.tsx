@@ -12,9 +12,9 @@ export default function SentMsg({ text, participant, time }: { text: string; par
 
     return (
         <>
-            <div>
+            <div className="max-w-xl">
                 <div className='bg-primary p-2 rounded-l-xl rounded-tr-xl'>
-                    <p className='text-primary-foreground text-sm font-medium'>{text}</p>
+                    <p className='text-primary-foreground text-sm font-medium break-all'>{text}</p>
                 </div>
                 <div className="flex justify-end items-center gap-1">
                     <h5 className="text-primary-forground text-xs font-medium">{participant}</h5>

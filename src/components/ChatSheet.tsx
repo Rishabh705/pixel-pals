@@ -23,20 +23,22 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
 
     const renderCards = ({ data }: { data: ChatData }) => {
 
-        const socketMessageChatIds:Set<string> = new Set(socketMessages.map((msg) => msg.chatId));
+        const uniqueSocketMessages:Map<string, SocketMessage> = new Map();
+
+        for(const msg of socketMessages){
+            //populate
+            uniqueSocketMessages.set(msg.chatId, msg);
+        }
         
         const filteredIndiChats:IndividualChatData[] = data.individualChats.filter((chat:IndividualChatData)=>{
-            return !socketMessageChatIds.has(chat._id)
+            return !uniqueSocketMessages.has(chat._id)
         })||[];
 
         const filteredGropChats:GroupChatData[] = data.groupChats.filter((chat:GroupChatData)=>{
-            return !socketMessageChatIds.has(chat._id)
+            return !uniqueSocketMessages.has(chat._id)
         }) || []
 
-        const filteredSocketChats:SocketMessage[] = socketMessages.filter((msg:SocketMessage)=>{
-            return socketMessageChatIds.has(msg.chatId)
-        })    
-    
+        const filteredSocketChats:SocketMessage[] = Array.from(uniqueSocketMessages.values())
 
         const socketMessageCards: JSX.Element[] = filteredSocketChats
         .filter((msg:SocketMessage) => {
@@ -53,6 +55,7 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
 
             return (
                 <ChatCard
+                    key={msg._id}
                     chatId={msg.chatId}
                     link={`${msg.chatId}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
                     avatarSrc="https://github.com/shadcn.png"
@@ -84,6 +87,7 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
 
                 return (
                     <ChatCard
+                        key={chat._id}
                         chatId={chat._id}
                         link={`${chat._id}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
                         avatarSrc="https://github.com/shadcn.png"
@@ -109,6 +113,7 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
 
                 return (
                     <ChatCard
+                        key={chat._id}
                         chatId={chat._id}
                         link={`${chat._id}?name=${chat.chat.name}`}
                         avatarSrc="https://github.com/shadcn.png"
@@ -129,7 +134,7 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
                 ) : (
                     <div className="flex flex-col gap-2 justify-center items-center h-96 ">
                         <TbFaceIdError size={40} color="#858687" />
-                        <p className="text-muted-foreground">No chats yet</p>
+                        <p className="text-muted-foreground">No chats found</p>
                     </div>
                 )}
             </>

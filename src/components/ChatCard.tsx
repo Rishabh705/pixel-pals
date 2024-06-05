@@ -21,7 +21,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackTe
             </Avatar>
             <div>
                 <h2 className="text-md font-semibold text-secondary-foreground">{title}</h2>
-                <p className="text-sm font-medium text-secondary-foreground">{subtitle}</p>
+                <p className="text-sm font-medium text-secondary-foreground">{subtitle.length > 35 ? `${subtitle.substring(0, 35)}...` : subtitle}</p>
             </div>
         </Link>
         <Separator />
