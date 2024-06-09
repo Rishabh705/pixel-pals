@@ -10,6 +10,7 @@ import { Await, Form, useSearchParams } from "react-router-dom";
 import { DetailedIndividualChat, DetailedGroupChat, Message, SocketMessage } from "@/utils/types";
 import { socket } from "@/lib/socket";
 import { clear } from "@/rtk/slices/socketMsgSlice";
+import { Skeleton } from "./ui/skeleton";
 
 export default function RenderChat({ results, method, chatId }: { results?: any, method: any, chatId: string }) {
   const scrollRef = useRef(null);
@@ -40,7 +41,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
     for (const msg of socketMessages) {
       socketMessagesMap.set(msg._id, msg);
     }
-  
+
     const filteredChatMessages = data.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
     const filteredSocketMessages = socketMessagesMap.size > 0 ? [...socketMessagesMap.values()] : [];
 
@@ -88,16 +89,26 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
         </div>
       </section>
       <section className="bg-slate-100 flex-1 p-3 space-y-8 overflow-y-scroll scrollbar data" ref={scrollRef}>
+
+
         <Suspense fallback={
           <>
             {
-              Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="py-4 px-4 md:px-6 lg:px-8 border-b-2 border-r-2 bg-card flex items-center gap-4 hover:bg-secondary hover:cursor-pointer">
-                  <span className="rounded-full p-3" />
-                  <div>
-                    <span className="text-md font-semibold text-card-foreground" />
-                    <span className="text-sm font-medium text-card-foreground" />
-                  </div>
+              Array.from({ length: 20 }).map((_, index) => (
+                <div key={index}>
+                  {
+                    index % 2 === 0 ? (
+                      <div className="max-w-screen flex justify-end gap-4">
+                        <Skeleton className="h-10 w-60 bg-slate-300 rounded-br-none rounded-l-xl rounded-tr-xl" />
+                        <Skeleton className="h-10 w-10 bg-slate-300 rounded-full" />
+                      </div>
+                    ) : (
+                      <div className="max-w-screen flex justify-start gap-4">
+                        <Skeleton className="h-10 w-10 bg-slate-300 rounded-full" />
+                        <Skeleton className="h-10 w-60 bg-slate-300 rounded-bl-none rounded-r-xl rounded-tl-xl" />
+                      </div>
+                    )
+                  }
                 </div>
               ))
             }

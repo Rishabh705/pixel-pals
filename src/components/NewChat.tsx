@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { User } from "@/utils/types";
 import { addGroup, createChat } from "@/lib/api";
 import { useAppSelector } from "@/rtk/hooks";
-import { useNavigate, Await, Form, } from "react-router-dom";
+import { useNavigate, Await, Form, useNavigation, Navigation } from "react-router-dom";
 import CustomCard from "./CustomCard";
 import { Button } from "@/components/ui/button"
 import {
@@ -44,15 +44,6 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
     // Emit socket event to join individual chat room
     socket.emit("join-chat", res._id);
   };
-
-  // const createGroupChat = async () => {
-  //   if (!token) throw new Error("User not authenticated.");
-  //   const res = await createChat(token, null); // Adjust createChat function to handle group creation
-  //   navigate(`/chats/${res._id}`);
-
-  //   // Emit socket event to join group chat room
-  //   socket.emit("join-chat", res._id, "group");
-  // };
 
   const renderContacts = (contacts: User[]) => {
 
@@ -134,6 +125,8 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
 }
 
 function AddContactDialog({ error }: { error: string }) {
+  const status: Navigation = useNavigation()
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -164,7 +157,11 @@ function AddContactDialog({ error }: { error: string }) {
             )}
           </div>
           <DialogFooter>
-              <Button type="submit" name="intent" value='create-contact'>Submit</Button>
+            <Button type="submit" name="intent" value='create-contact' disabled={status.state === "submitting"}
+              className={`${status.state !== "submitting" && "hover:bg-orange-600 cursor-pointer"} ${status.state === "submitting" && "opacity-40"}`}
+            >
+              {status.state === "submitting" ? "Submitting..." : "Submit"}
+            </Button>
           </DialogFooter>
         </Form>
       </DialogContent>
@@ -214,7 +211,7 @@ function AddGroupDialog({ error, contacts }: { error: string, contacts: any }) {
       if (!token) throw new Error("User not authenticated.");
       const res = await addGroup(token, formData.name, formData.description, formData.members);
       console.log("Group created", res);
-      
+
     } catch (error: any) {
       console.log("Error creating group", error.message);
     }
@@ -311,7 +308,7 @@ function AddGroupDialog({ error, contacts }: { error: string, contacts: any }) {
             )}
           </div>
           <DialogFooter>
-              <Button type="submit" name="intent" value="create-group">Submit</Button>
+            <Button type="submit" name="intent" value="create-group">Submit</Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -70,7 +70,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
             .map((chat) => {
                 const otherParticipant = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
                 const sender = chat.lastmessage?.sender?.username || "";
-                const lastMessage = chat.lastmessage?.message || "No messages yet :";
+                const lastMessage = chat.lastmessage?.message || "No messages yet";
                 const subtitle = sender.toLowerCase() === username?.toLowerCase() ? `You: ${lastMessage}` : `${sender}: ${lastMessage}`;
 
                 return (
