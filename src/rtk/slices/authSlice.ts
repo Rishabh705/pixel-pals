@@ -4,6 +4,7 @@ import { AuthState } from '@/utils/types'
 
 const initialState: AuthState = {
     userId: null,
+    email: null,
     username: null,
     token: null,
 }
