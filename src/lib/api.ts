@@ -3,7 +3,7 @@ const url = import.meta.env.VITE_SERVER
 
 //authentication
 
-export async function loginUser(formdata: { username: (FormDataEntryValue | null), password: (FormDataEntryValue | null) }): Promise<any> {
+export async function loginUser(formdata: { email: (FormDataEntryValue | null), password: (FormDataEntryValue | null) }): Promise<any> {
     const res: Response = await fetch(`${url}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -26,7 +26,7 @@ export async function loginUser(formdata: { username: (FormDataEntryValue | null
     return data
 }
 
-export async function registerUser(formdata: { username: (FormDataEntryValue | null), password: (FormDataEntryValue | null) }): Promise<any> {
+export async function registerUser(formdata: { username: string, email:string, password: string }): Promise<any> {
     const res: Response = await fetch(`${url}/api/auth/register/`, {
         method: 'POST',
         headers: {
@@ -137,7 +137,7 @@ export async function createChat(token: string, receiverID: string): Promise<any
     return data.data
 }
 
-export async function addContact(token: string, contactName: string): Promise<any> {
+export async function addContact(token: string, email: string): Promise<any> {
     const options = {
         method: 'POST',
         headers: {
@@ -145,7 +145,7 @@ export async function addContact(token: string, contactName: string): Promise<an
             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-            contactname: contactName
+            email: email
         })
     }
     const res: Response = await fetch(`${url}/api/contacts`, options)
@@ -186,7 +186,7 @@ export async function getContacts(userID: string, token: string): Promise<any> {
 }
 
 
-export async function sendMessage(message: string, token: string, chatID?: string): Promise<any> {
+export async function sendMessage(message: string, token: string, messageID:string, chatID?: string): Promise<any> {
     let method = 'POST'
 
     if (chatID) {
@@ -200,7 +200,8 @@ export async function sendMessage(message: string, token: string, chatID?: strin
             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-            message: message
+            message: message,
+            messageID: messageID
         })
     }
     const res: Response = await fetch(`${url}/api/chats/${chatID}`, options)
@@ -217,3 +218,33 @@ export async function sendMessage(message: string, token: string, chatID?: strin
 
     return data
 }
+
+export async function addGroup(token:string, name: string, description:string, members: string[]): Promise<any> {
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            name: name,
+            description: description,
+            members: members
+        })
+    }
+    const res: Response = await fetch(`${url}/api/chats/group`, options)
+
+    const data = await res.json()
+
+    if (!res.ok) {
+        throw {
+            message: data.message || "Failed to create group",
+            statusText: res.statusText,
+            status: res.status,
+        }
+    }
+
+    return data
+}
+

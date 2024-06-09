@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet"
 import { addContact, getChats, getContacts } from "@/lib/api";
 import { requireAuth } from "@/lib/requireAuth";
 import { SocketMessage } from "@/utils/types";
-import { useAppDispatch } from "@/rtk/hooks";
+import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
 import { socket } from "@/lib/socket";
 import ChatSheet from "@/components/ChatSheet";
@@ -30,12 +30,16 @@ export async function action({ request }: { request: Request }) {
 
     try {
         const form: FormData = await request.formData()
-        const contactName: string = form.get('contactName')?.toString() || ''
         const token: (string | null) = store.getState().auth.token
 
         if (!token) throw new Error("User not authenticated.")
 
-        await addContact(token, contactName)
+        const intent: string = form.get('intent')?.toString() || ''
+
+        if (intent === 'create-contact') {
+            const email: string = form.get('email')?.toString() || ''
+            await addContact(token, email)
+        }
         return null
     } catch (error: any) {
         return error.message
@@ -47,9 +51,14 @@ export default function ChatLayout() {
     const data: any = useLoaderData()
     const error: any = useActionData()
     const dispatch = useAppDispatch()
-
+    const userId = useAppSelector((state) => state.auth.userId)
 
     useEffect(() => {
+
+        if (userId) {
+            socket.emit('register-user', userId);
+        }
+
         const handleMessage = (data: SocketMessage) => {
             dispatch(setSocketMsg(data));
         };
@@ -66,7 +75,6 @@ export default function ChatLayout() {
         };
     }, [dispatch]);
 
-
     return (
         <div className="flex h-screen border-b-2">
             <Sheet>
@@ -77,7 +85,7 @@ export default function ChatLayout() {
                     <ChatSheet error={error} data={data} />
                 </SheetContent>
             </Sheet>
-            <ChatSheet error={error} data={data} className='hidden'/>
+            <ChatSheet error={error} data={data} className='hidden' />
             <Outlet />
         </div>
     )

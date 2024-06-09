@@ -1,95 +1,83 @@
 import { Suspense, useState } from "react"
-import {Await} from "react-router-dom"
+import { Await } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CiSearch } from "react-icons/ci";
 import { TbFaceIdError } from "react-icons/tb";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useAppSelector } from "@/rtk/hooks";
-import { ChatData, GroupChatData, IndividualChatData, User, SocketMessage } from "@/utils/types"
+import { ChatData, SocketMessage } from "@/utils/types"
 import { Skeleton } from "@/components/ui/skeleton";
 import NewChat from "@/components/NewChat";
 import ChatCard from "@/components/ChatCard";
 import { cn } from "@/lib/utils";
 
 
-export default function ChatSheet({error, data, className}:{error:any; data:any; className?:string}) {
-
+export default function ChatSheet({ error, data, className }: { error: any; data: any; className?: string }) {
     const [searchText, setSearchText] = useState<string>("");
-    const username: (string | null) = useAppSelector((state) => state.auth.username)
+    const username: (string | null) = useAppSelector((state) => state.auth.username);
+    const email: (string | null) = useAppSelector((state) => state.auth.email);
     const userId: string | null = useAppSelector((state) => state.auth.userId);
     const socketMessages: SocketMessage[] = useAppSelector((state) => state.socketMsgs);
-    const results = data.data
+    const results = data.data;
 
     const renderCards = ({ data }: { data: ChatData }) => {
-
-        const uniqueSocketMessages:Map<string, SocketMessage> = new Map();
-
-        for(const msg of socketMessages){
-            //populate
-            uniqueSocketMessages.set(msg.chatId, msg);
+        const socketMessagesMap = new Map();
+        for (const msg of socketMessages) {
+            socketMessagesMap.set(msg.chat_id, msg);
         }
-        
-        const filteredIndiChats:IndividualChatData[] = data.individualChats.filter((chat:IndividualChatData)=>{
-            return !uniqueSocketMessages.has(chat._id)
-        })||[];
 
-        const filteredGropChats:GroupChatData[] = data.groupChats.filter((chat:GroupChatData)=>{
-            return !uniqueSocketMessages.has(chat._id)
-        }) || []
+        // Update individual chats with socket messages
+        const updatedIndividualChats = data.individualChats.map((chat) => {
+            const socketMessage = socketMessagesMap.get(chat.chat_id);
+            if (socketMessage) {
+                return {
+                    ...chat,
+                    lastmessage: {
+                        _id: socketMessage._id,
+                        message: socketMessage.message,
+                        sender: socketMessage.sender,
+                        timestamp: socketMessage.timestamp,
+                    },
+                };
+            }
+            return chat;
+        });
 
-        const filteredSocketChats:SocketMessage[] = Array.from(uniqueSocketMessages.values())
+        // Update group chats with socket messages
+        const updatedGroupChats = data.groupChats.map((chat) => {
+            const socketMessage = socketMessagesMap.get(chat.chat_id);
+            if (socketMessage) {
+                return {
+                    ...chat,
+                    lastmessage: {
+                        _id: socketMessage._id,
+                        message: socketMessage.message,
+                        sender: socketMessage.sender,
+                        timestamp: socketMessage.timestamp,
+                    },
+                };
+            }
+            return chat;
+        });
 
-        const socketMessageCards: JSX.Element[] = filteredSocketChats
-        .filter((msg:SocketMessage) => {
-            const otherParticipant: User = msg.sender._id === userId ? msg.receiver : msg.sender;
-            return otherParticipant?.username.toLowerCase().includes(searchText.toLowerCase());
-        })
-        .map((msg: SocketMessage) => {
-            const sender: string = msg.sender?.username || "Unknown";
-            const lastMessage: string = msg.message || "No messages yet";
-            const subtitle = sender.toLowerCase() === username?.toLowerCase()
-                ? `You: ${lastMessage}`
-                : `${sender}: ${lastMessage}`;
-            const otherParticipant: User = msg.sender._id === userId ? msg.receiver : msg.sender;
-
-            return (
-                <ChatCard
-                    key={msg._id}
-                    chatId={msg.chatId}
-                    link={`${msg.chatId}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
-                    avatarSrc="https://github.com/shadcn.png"
-                    fallbackText={otherParticipant?.username || ""}
-                    title={otherParticipant?.username || ""}
-                    subtitle={subtitle}
-                />
-            )
-        })
-
-        const individualChatCards: JSX.Element[] = filteredIndiChats
-            .filter((chat: IndividualChatData) => {
-                const otherParticipant: User | undefined = chat.chat.participants?.find(
-                    (participant: User) => participant._id !== userId
-                );
-                return otherParticipant?.username.toLowerCase().includes(searchText.toLowerCase());
+        // Filter and map individual chat cards
+        const individualChatCards = updatedIndividualChats
+            .filter((chat) => {
+                const otherParticipant = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
+                return otherParticipant.username.toLowerCase().includes(searchText.toLowerCase());
             })
-            .map((chat: IndividualChatData) => {
-                const otherParticipant: User | undefined = chat.chat.participants?.find(
-                    (participant: User) => participant._id !== userId
-                );
-                const sender: string | undefined = chat.chat.lastMessage?.sender?.username;
-                const lastMessage: string | undefined = chat.chat.lastMessage?.message;
-                const subtitle = sender
-                    ? sender.toLowerCase() === username?.toLowerCase()
-                        ? `You: ${lastMessage}`
-                        : `${sender}: ${lastMessage}`
-                    : "No messages yet";
+            .map((chat) => {
+                const otherParticipant = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
+                const sender = chat.lastmessage?.sender?.username || "";
+                const lastMessage = chat.lastmessage?.message || "No messages yet :";
+                const subtitle = sender.toLowerCase() === username?.toLowerCase() ? `You: ${lastMessage}` : `${sender}: ${lastMessage}`;
 
                 return (
                     <ChatCard
-                        key={chat._id}
-                        chatId={chat._id}
-                        link={`${chat._id}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
+                        key={chat.chat_id}
+                        chatId={chat.chat_id}
+                        link={`${chat.chat_id}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
                         avatarSrc="https://github.com/shadcn.png"
                         fallbackText={otherParticipant?.username || ""}
                         title={otherParticipant?.username || ""}
@@ -98,34 +86,29 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
                 );
             });
 
-        const groupChatCards: JSX.Element[] = filteredGropChats
-            .filter((chat: GroupChatData) => {
-                return chat.chat.name.toLowerCase().includes(searchText.toLowerCase());
-            })
-            .map((chat: GroupChatData) => {
-                const sender: string | undefined = chat.chat.lastMessage?.sender?.username;
-                const lastMessage: string | undefined = chat.chat.lastMessage?.message;
-                const subtitle = sender
-                    ? sender.toLowerCase() === username?.toLowerCase()
-                        ? "You: " + lastMessage
-                        : sender + ": " + lastMessage
-                    : "No messages yet";
+        // Filter and map group chat cards
+        const groupChatCards = updatedGroupChats
+            .filter((chat) => chat.name.toLowerCase().includes(searchText.toLowerCase()))
+            .map((chat) => {
+                const sender = chat.lastmessage?.sender?.username || "";
+                const lastMessage = chat.lastmessage?.message || "No messages yet :";
+                const subtitle =
+                    sender.toLowerCase() === username?.toLowerCase() ? `You: ${lastMessage}` : `${sender}: ${lastMessage}`;
 
                 return (
                     <ChatCard
-                        key={chat._id}
-                        chatId={chat._id}
-                        link={`${chat._id}?name=${chat.chat.name}`}
+                        key={chat.chat_id}
+                        chatId={chat.chat_id}
+                        link={`${chat.chat_id}?name=${chat.name}`}
                         avatarSrc="https://github.com/shadcn.png"
-                        fallbackText={chat.chat.name}
-                        title={chat.chat.name}
+                        fallbackText={chat.name}
+                        title={chat.name}
                         subtitle={subtitle}
                     />
                 );
             });
 
-
-        const allCards: JSX.Element[] = [...socketMessageCards, ...individualChatCards, ...groupChatCards];
+        const allCards = [...individualChatCards, ...groupChatCards];
 
         return (
             <>
@@ -140,8 +123,9 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
             </>
         );
     }
+
     return (
-        <div className={cn(className,"lg:flex lg:flex-col lg:w-1/3 lg:min-w-72 lg:max-w-96 bg-secondary lg:border-r-2")}>
+        <div className={cn(className, "lg:flex lg:flex-col lg:w-1/3 lg:min-w-72 lg:max-w-96 bg-secondary lg:border-r-2")}>
             <section className="flex items-center justify-between border-b-2">
                 <div className="flex gap-4 justify-start py-5 px-2 lg:px-6 items-center ">
                     <Avatar>
@@ -149,8 +133,8 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
                         <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                     <div>
-                        <h1 className="text-md font-semibold text-card-foreground">{username}</h1>
-                        <p className="text-md font-medium text-card-foreground">@47razor</p>
+                        <h1 className="text-md font-medium text-card-foreground">{username}</h1>
+                        <p className="text-sm font-medium text-muted-foreground">{email}</p>
                     </div>
                 </div>
                 <div className="flex gap-4 px-3 items-center">
@@ -186,5 +170,6 @@ export default function ChatSheet({error, data, className}:{error:any; data:any;
                     </Await>
                 </Suspense>
             </section>
-        </div>)
+        </div>
+    )
 }
