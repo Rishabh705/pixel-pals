@@ -1,12 +1,16 @@
 import { Suspense, useState } from "react"
+
 import { Await } from "react-router-dom"
+
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CiSearch } from "react-icons/ci";
 import { TbFaceIdError } from "react-icons/tb";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useAppSelector } from "@/rtk/hooks";
+
 import { ChatData, SocketMessage } from "@/utils/types"
+
 import { Skeleton } from "@/components/ui/skeleton";
 import NewChat from "@/components/NewChat";
 import ChatCard from "@/components/ChatCard";
@@ -110,6 +114,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
 
         const allCards = [...individualChatCards, ...groupChatCards];
 
+
         return (
             <>
                 {allCards.length > 0 ? (
@@ -126,6 +131,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
 
     return (
         <div className={cn(className, "lg:flex lg:flex-col lg:w-1/3 lg:min-w-72 lg:max-w-96 bg-secondary lg:border-r-2")}>
+
             <section className="flex items-center justify-between border-b-2">
                 <div className="flex gap-4 justify-start py-5 px-2 lg:px-6 items-center ">
                     <Avatar>
@@ -172,4 +178,5 @@ export default function ChatSheet({ error, data, className }: { error: any; data
             </section>
         </div>
     )
+
 }

@@ -35,7 +35,6 @@ export async function action({ request, params }: { request: Request, params: an
     const receiverName: string =  url.searchParams.get("name") || '';
     const receiverId: string =  url.searchParams.get("re") || '';
 
-
     if (!token || !username || !id) throw new Error('Unauthorized')
 
     const today: Date = new Date()
@@ -79,5 +78,13 @@ export default function UpdateChat() {
 
   return (
     <RenderChat results={results} method='put' chatId={id} />
+=======
+  const results:any = useLoaderData()
+  const {id} = useParams() 
+  
+  if(!id) throw new Error('Chat not found')
+
+  return(
+    <RenderChat results={results} method='put' chatId={id}/>
   )
 }

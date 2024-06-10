@@ -8,15 +8,19 @@ import { FaFacebook } from "react-icons/fa";
 export async function action({ request }: { request: Request }) {
   try {
     const formdata:FormData = await request.formData()
+
     const username: string = formdata.get('username')?.toString() || ''
     const email: string = formdata.get('email')?.toString() || ''
     const password1: string = formdata.get('password1')?.toString() || ''
     const password2: string = formdata.get('password2')?.toString() || ''
 
+
     if (password1 !== password2)
       throw new Error("Passwords should match")
 
+
     const res = await registerUser({ username, email, password: password1 })
+
 
     console.log(res);
     return redirect('/login')
@@ -36,12 +40,14 @@ export default function Register() {
       <p className="text-2xl font-medium text-aliceblue">Create your account</p>
       <Form className="flex flex-col w-full gap-5 max-w-md" method='post' replace>
         <input
+
           name="email"
           type="email"
           placeholder="Email"
           className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
         />
         <input
+
           name="username"
           type="text"
           placeholder="Username"

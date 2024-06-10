@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { CiSearch } from "react-icons/ci";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/utils/types";
+
 import { addGroup, createChat } from "@/lib/api";
 import { useAppSelector } from "@/rtk/hooks";
 import { useNavigate, Await, Form, useNavigation, Navigation } from "react-router-dom";
@@ -29,7 +30,9 @@ import {
 import { BiSolidError } from "react-icons/bi"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "./ui/skeleton";
+
 import { socket } from '@/lib/socket'
+
 
 export default function NewChat({ contacts, error, className }: { contacts: any, error: string, className?: string }) {
   const [searchText, setSearchText] = React.useState<string>("")
@@ -37,6 +40,7 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
   const navigate = useNavigate()
 
   const createOneonOneChat = async (contact: User) => {
+
     if (!token) throw new Error("User not authenticated.");
     const res = await createChat(token, contact._id);
     navigate(`/chats/${res._id}?re=${contact._id}&&name=${contact.username}`);
@@ -44,6 +48,7 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
     // Emit socket event to join individual chat room
     socket.emit("join-chat", res._id);
   };
+
 
   const renderContacts = (contacts: User[]) => {
 
@@ -63,7 +68,9 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
     return (
       <>
         <p className="text-md text-secondary-foreground font-medium">My Contacts</p>
+
         {contactCard}
+
       </>
     );
 
@@ -91,7 +98,9 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
             </span>
             <Input className="rounded-r-full border-none active:border-none bg-background" placeholder="Search a contact" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
           </section>
+
           <AddGroupDialog error={error} contacts={contacts} />
+
           <Separator />
         </section>
 
@@ -144,16 +153,19 @@ function AddContactDialog({ error }: { error: string }) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
+
               <Label htmlFor="email" className="text-right">
                 Email
               </Label>
               <Input name="email" className="col-span-3" />
+
             </div>
             {error && (
               <div className="flex gap-4 p-2.5 bg-red-200 rounded-md">
                 <BiSolidError className="h-5 w-5 text-red-600" />
                 <p className="text-sm leading-5 text-red-600">{error}</p>
               </div>
+
             )}
           </div>
           <DialogFooter>
@@ -162,6 +174,7 @@ function AddContactDialog({ error }: { error: string }) {
             >
               {status.state === "submitting" ? "Submitting..." : "Submit"}
             </Button>
+
           </DialogFooter>
         </Form>
       </DialogContent>
