@@ -35,16 +35,20 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
       socket.off('receive-message', () => { });
     };
   }, [chatId, dispatch]);
+
   
   const renderChats = ({data}:{data: DetailedIndividualChat | DetailedGroupChat}) => {
     
     const socketMessagesMap:Map<string, SocketMessage> = new Map();
+
     for (const msg of socketMessages) {
       socketMessagesMap.set(msg._id, msg);
     }
 
+
     const filteredChatMessages:Message[] = data.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
     const filteredSocketMessages:SocketMessage[] = socketMessagesMap.size > 0 ? [...socketMessagesMap.values()] : [];
+
 
     const allMessages: (Message | SocketMessage)[] = [...filteredChatMessages, ...filteredSocketMessages].sort((a, b) => {
       const d1 = new Date(a.created_at);
@@ -84,12 +88,15 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
         </Avatar>
         <div>
           <h1 className="text-lg font-semibold text-card-foreground">{name}</h1>
+
           <p className="text-xs font-medium text-card-foreground flex items-center">
+
             typing...
           </p>
         </div>
       </section>
       <section className="bg-slate-100 flex-1 p-3 space-y-8 overflow-y-scroll scrollbar data" ref={scrollRef}>
+
         <Suspense fallback={
           <>
             {
@@ -113,7 +120,9 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
             }
           </>
         }>
+
           <Await resolve={results}>
+
             {renderChats}
           </Await>
         </Suspense>
@@ -132,4 +141,6 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
       </Form>
     </div>
   )
+
 }
+

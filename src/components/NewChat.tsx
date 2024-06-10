@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { CiSearch } from "react-icons/ci";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/utils/types";
+
 import { createChat } from "@/lib/api";
 import { useAppSelector } from "@/rtk/hooks";
 import { useNavigate, Await } from "react-router-dom";
@@ -21,12 +22,14 @@ import { socket } from '@/lib/socket'
 import { AddGroup } from "./AddGroup";
 import AddContact from "./AddContact";
 
+
 export default function NewChat({ contacts, error, className }: { contacts: any, error: string, className?: string }) {
   const [searchText, setSearchText] = React.useState<string>("")
   const token = useAppSelector((state) => state.auth.token)
   const navigate = useNavigate()
 
   const createOneonOneChat = async (contact: User) => {
+
     if (!token) throw new Error("User not authenticated.");
     const res = await createChat(token, contact._id);
     navigate(`/chats/${res._id}?re=${contact._id}&&name=${contact.username}`);
@@ -53,7 +56,9 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
     return (
       <>
         <p className="text-md text-secondary-foreground font-medium">My Contacts</p>
+
         {contactCard}
+
       </>
     );
 
@@ -81,7 +86,9 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
             </span>
             <Input className="rounded-r-full border-none active:border-none bg-background" placeholder="Search a contact" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
           </section>
+
           <AddGroup error={error} contacts={contacts} />
+
           <Separator />
         </section>
 
@@ -106,12 +113,12 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
               {renderContacts}
             </Await>
           </Suspense>
+
           <AddContact error={error} />
+
         </section>
 
       </SheetContent>
     </Sheet>
   )
 }
-
-

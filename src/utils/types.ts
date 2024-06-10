@@ -54,4 +54,4 @@ export interface SocketMessage extends Message {
 
 export interface SocketChat {
   chatId: string;
-}
+

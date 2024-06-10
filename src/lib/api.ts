@@ -26,7 +26,9 @@ export async function loginUser(formdata: { email: (FormDataEntryValue | null), 
     return data
 }
 
+
 export async function registerUser(formdata: { username: string, email:string, password: string }): Promise<any> {
+
     const res: Response = await fetch(`${url}/api/auth/register/`, {
         method: 'POST',
         headers: {
@@ -137,6 +139,7 @@ export async function createChat(token: string, receiverID: string): Promise<any
     return data.data
 }
 
+
 export async function addContact(token: string, email: string): Promise<any> {
     const options = {
         method: 'POST',
@@ -187,6 +190,7 @@ export async function getContacts(userID: string, token: string): Promise<any> {
 
 
 export async function sendMessage(message: string, token: string, messageID:string, chatID?: string): Promise<any> {
+
     let method = 'POST'
 
     if (chatID) {
@@ -217,9 +221,11 @@ export async function sendMessage(message: string, token: string, messageID:stri
     }
 
     return data
+
 }
 
 export async function addGroup(token:string, name: string, description:string, members: FormDataEntryValue[]): Promise<any> {
+
 
     const options = {
         method: 'POST',

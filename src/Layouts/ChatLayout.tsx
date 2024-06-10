@@ -34,12 +34,14 @@ export async function action({ request }: { request: Request }) {
 
         if (!token) throw new Error("User not authenticated.")
 
+
         const intent: string = form.get('intent')?.toString() || ''
 
         if (intent === 'create-contact') {
             const email: string = form.get('email')?.toString() || ''
             await addContact(token, email)
         }
+
         else if (intent === 'create-group') {
             const name = form.get('name')?.toString() || ''
             const description = form.get('description')?.toString() || ''
@@ -47,6 +49,7 @@ export async function action({ request }: { request: Request }) {
             const res = await addGroup(token, name, description, members);
             console.log("Group created", res);
         }
+
         return null
     } catch (error: any) {
         return error.message
@@ -58,6 +61,7 @@ export default function ChatLayout() {
     const data: any = useLoaderData()
     const error: any = useActionData()
     const dispatch = useAppDispatch()
+
     const userId = useAppSelector((state) => state.auth.userId)
 
     useEffect(() => {
@@ -92,7 +96,9 @@ export default function ChatLayout() {
                     <ChatSheet error={error} data={data} />
                 </SheetContent>
             </Sheet>
+
             <ChatSheet error={error} data={data} className='hidden' />
+
             <Outlet />
         </div>
     )
