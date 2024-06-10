@@ -6,7 +6,7 @@ import { CiSearch } from "react-icons/ci";
 import { TbFaceIdError } from "react-icons/tb";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useAppSelector } from "@/rtk/hooks";
-import { ChatData, SocketMessage } from "@/utils/types"
+import { ChatData, GroupChat, IndividualChat, SocketMessage } from "@/utils/types"
 import { Skeleton } from "@/components/ui/skeleton";
 import NewChat from "@/components/NewChat";
 import ChatCard from "@/components/ChatCard";
@@ -22,14 +22,14 @@ export default function ChatSheet({ error, data, className }: { error: any; data
     const results = data.data;
 
     const renderCards = ({ data }: { data: ChatData }) => {
-        const socketMessagesMap = new Map();
+        const socketMessagesMap:Map<string, SocketMessage> = new Map();
         for (const msg of socketMessages) {
             socketMessagesMap.set(msg.chat_id, msg);
         }
 
         // Update individual chats with socket messages
-        const updatedIndividualChats = data.individualChats.map((chat) => {
-            const socketMessage = socketMessagesMap.get(chat.chat_id);
+        const updatedIndividualChats: IndividualChat[] = data.individualChats.map((chat) => {
+            const socketMessage: (SocketMessage | undefined) = socketMessagesMap.get(chat.chat_id);
             if (socketMessage) {
                 return {
                     ...chat,
@@ -37,7 +37,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         _id: socketMessage._id,
                         message: socketMessage.message,
                         sender: socketMessage.sender,
-                        timestamp: socketMessage.timestamp,
+                        created_at: socketMessage.created_at,
                     },
                 };
             }
@@ -45,8 +45,8 @@ export default function ChatSheet({ error, data, className }: { error: any; data
         });
 
         // Update group chats with socket messages
-        const updatedGroupChats = data.groupChats.map((chat) => {
-            const socketMessage = socketMessagesMap.get(chat.chat_id);
+        const updatedGroupChats:GroupChat[] = data.groupChats.map((chat) => {
+            const socketMessage: (SocketMessage | undefined) = socketMessagesMap.get(chat.chat_id);
             if (socketMessage) {
                 return {
                     ...chat,
@@ -54,7 +54,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         _id: socketMessage._id,
                         message: socketMessage.message,
                         sender: socketMessage.sender,
-                        timestamp: socketMessage.timestamp,
+                        created_at: socketMessage.created_at,
                     },
                 };
             }
@@ -62,7 +62,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
         });
 
         // Filter and map individual chat cards
-        const individualChatCards = updatedIndividualChats
+        const individualChatCards: JSX.Element[] = updatedIndividualChats
             .filter((chat) => {
                 const otherParticipant = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
                 return otherParticipant.username.toLowerCase().includes(searchText.toLowerCase());
@@ -87,7 +87,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
             });
 
         // Filter and map group chat cards
-        const groupChatCards = updatedGroupChats
+        const groupChatCards: JSX.Element[] = updatedGroupChats
             .filter((chat) => chat.name.toLowerCase().includes(searchText.toLowerCase()))
             .map((chat) => {
                 const sender = chat.lastmessage?.sender?.username || "";
@@ -108,7 +108,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                 );
             });
 
-        const allCards = [...individualChatCards, ...groupChatCards];
+        const allCards: JSX.Element[] = [...individualChatCards, ...groupChatCards];
 
         return (
             <>

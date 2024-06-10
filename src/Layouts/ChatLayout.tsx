@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, defer, useLoaderData, useActionData } from "react-router-dom"
 import { store } from "@/rtk/store";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet"
-import { addContact, getChats, getContacts } from "@/lib/api";
+import { addContact, getChats, getContacts, addGroup } from "@/lib/api";
 import { requireAuth } from "@/lib/requireAuth";
 import { SocketMessage } from "@/utils/types";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
@@ -39,6 +39,13 @@ export async function action({ request }: { request: Request }) {
         if (intent === 'create-contact') {
             const email: string = form.get('email')?.toString() || ''
             await addContact(token, email)
+        }
+        else if (intent === 'create-group') {
+            const name = form.get('name')?.toString() || ''
+            const description = form.get('description')?.toString() || ''
+            const members = form.getAll('members')|| []
+            const res = await addGroup(token, name, description, members);
+            console.log("Group created", res);
         }
         return null
     } catch (error: any) {

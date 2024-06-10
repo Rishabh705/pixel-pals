@@ -219,7 +219,7 @@ export async function sendMessage(message: string, token: string, messageID:stri
     return data
 }
 
-export async function addGroup(token:string, name: string, description:string, members: string[]): Promise<any> {
+export async function addGroup(token:string, name: string, description:string, members: FormDataEntryValue[]): Promise<any> {
 
     const options = {
         method: 'POST',
