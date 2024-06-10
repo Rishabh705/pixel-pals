@@ -18,7 +18,6 @@ export async function action({ request }: { request: Request }) {
     if (password1 !== password2)
       throw new Error("Passwords should match")
 
-
     const res = await registerUser({ username, email, password: password1 })
 
 
