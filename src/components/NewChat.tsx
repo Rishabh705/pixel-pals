@@ -122,3 +122,4 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
     </Sheet>
   )
 }
+
