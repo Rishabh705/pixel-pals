@@ -6,7 +6,7 @@ export default function Emoji({setText}: {setText:any}) {
   const [isOpen, setIsOpen] = useState(false); 
 
   const toggleEmojiPicker = () => setIsOpen(!isOpen);
-  const handleEmoji = (emojiData: EmojiClickData, event: MouseEvent) => {
+  const handleEmoji = (emojiData: EmojiClickData) => {
     setText((prev:any) => prev + emojiData.emoji);
   }
 
