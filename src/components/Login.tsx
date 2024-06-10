@@ -12,6 +12,9 @@ import { store } from "@/rtk/store";
 interface JWTPayload extends JwtPayload{
     UserInfo:{
         username:string;
+
+        email:string;
+
         _id:string
     }
 }
@@ -27,19 +30,24 @@ export async function action({ request }: { request: Request }) {
     try {
         const pathname: string = new URL(request.url).searchParams.get("redirectTo") || '/'
         const form: FormData = await request.formData()
-        const username: (FormDataEntryValue | null) = form.get('username')
+
+        const email: (FormDataEntryValue | null) = form.get('email')
         const password: (FormDataEntryValue | null) = form.get('password')
 
-        const res = await loginUser({ username, password })
+        const res = await loginUser({ email, password })
+
 
         //decode the token
         const decoded: JWTPayload = jwtDecode(res.accessToken)
 
         const authData: AuthState = {
-            userId:decoded.UserInfo._id,
-            username:decoded.UserInfo.username,
-            token:res.accessToken
+
+            userId : decoded.UserInfo._id,
+            email : decoded.UserInfo.email,
+            username : decoded.UserInfo.username,
+            token : res.accessToken
         }
+            
 
         //store the data in the store
         store.dispatch(login(authData))
@@ -65,9 +73,11 @@ export default function Login() {
             <p className="text-2xl font-medium text-aliceblue">Sign in to your account</p>
             <Form method="post" className="flex flex-col w-full gap-5 max-w-md" replace>
                 <input
-                    name="username"
+
+                    name="email"
                     type="text"
-                    placeholder="Username"
+                    placeholder="Email"
+
                     required
                     className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
                 />

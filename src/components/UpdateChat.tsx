@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { getChat, sendMessage } from "@/lib/api";
 import { defer, useLoaderData, useParams } from "react-router-dom";
 import { store } from "@/rtk/store";
@@ -13,6 +14,8 @@ export async function loader({ params, request }: { params: any, request: Reques
   const token: (string | null) = store.getState().auth.token
   if (!token) return { data: [] }
 
+  socket.emit('join-chat', params.id);
+
   const data: (Promise<any>) = getChat(params.id, token)
   return defer({ data })
 }
@@ -27,31 +30,39 @@ export async function action({ request, params }: { request: Request, params: an
 
 
     const chatId: string = params.id
+
+    const url = new URL(request.url);
+    const receiverName: string =  url.searchParams.get("name") || '';
+    const receiverId: string =  url.searchParams.get("re") || '';
+
+
     if (!token || !username || !id) throw new Error('Unauthorized')
 
     const today: Date = new Date()
 
-    const res = await sendMessage(message, token, chatId)
+    const messageId: string = uuidv4();
 
     const data: SocketMessage = {
-      _id: res.newMessage._id,
-      chatId: chatId,
+      _id: messageId,
+      chat_id: chatId,
       message: message,
       sender: {
         _id: id,
-        avatar:'',
+        avatar: '',
         username: username,
       },
-      receiver:{
-        _id: res.newMessage.receiver._id,
-        avatar: res.newMessage.receiver.avatar,
-        username: res.newMessage.receiver.username
+      receiver: {
+        _id: receiverId,
+        avatar: '',
+        username: receiverName
       },
-      createdAt: today.toISOString()
+      created_at: today.toISOString()
     }
     store.dispatch(setSocketMsg(data))
     socket.emit('send-message', data)
-    
+
+    await sendMessage(message, token, messageId, chatId)
+
     return null
 
   } catch (error: any) {
@@ -61,12 +72,12 @@ export async function action({ request, params }: { request: Request, params: an
 }
 
 export default function UpdateChat() {
-  const results:any = useLoaderData()
-  const {id} = useParams() 
-  
-  if(!id) throw new Error('Chat not found')
+  const results: any = useLoaderData()
+  const { id } = useParams()
 
-  return(
-    <RenderChat results={results} method='put' chatId={id}/>
+  if (!id) throw new Error('Chat not found')
+
+  return (
+    <RenderChat results={results} method='put' chatId={id} />
   )
 }

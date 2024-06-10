@@ -1,91 +1,57 @@
 export interface AuthState {
-    userId: string | null
-    username: string | null
-    token: string | null
+  userId : string| null;
+  email : string| null;
+  username : string| null;
+  token : string| null;
 }
-
-// Define the type for a User
 export interface User {
-    _id: string;
-    username: string;
-    avatar: string;
-  }
-  
-  // Define the type for a Message
-  export interface Message {
-    _id: string;
-    message: string;
-    sender: User;
-    chat: string;
-    createdAt: string;
-    updatedAt: string;
-  }
-  
-  // Define the type for an Individual Chat
-  export interface IndividualChat {
-    _id: string;
-    participants: User[];
-    messages: Message[];
-    createdAt: string;
-    updatedAt: string;
-    lastMessage: Message;
-  }
-  
-  // Define the type for a Group Chat
-  export interface GroupChat {
-    _id: string;
-    name: string;
-    owner: string;
-    admins: string[];
-    members: string[];
-    messages: Message[];
-    createdAt: string;
-    updatedAt: string;
-    lastMessage: Message;
-  }
-  
-  // Define the Chat interface
-  export type Chat = IndividualChat | GroupChat;
-  
-  // Define the type for the data structure returned by the API
-  export interface IndividualChatData {
-    _id: string;
-    type: 'IndividualChat';
-    chat: IndividualChat;
-    createdAt: string;
-    updatedAt: string;
-  }
-  
-  export interface GroupChatData {
-    _id: string;
-    type: 'GroupChat';
-    chat: GroupChat;
-    createdAt: string;
-    updatedAt: string;
-  }
-
-  export interface DetailedChatData {
-    _id: string;
-    type: 'IndividualChat' | 'GroupChat';
-    chat: IndividualChat | GroupChat;
-    createdAt: string;
-    updatedAt: string;
+  _id: string;
+  username: string;
+  avatar: string;
 }
 
-  export interface ChatData {
-    individualChats: IndividualChatData[];
-    groupChats: GroupChatData[];
-  }
+export interface Message {
+  _id: string;
+  message: string;
+  sender: User;
+  created_at: string;
+}
 
-  export interface SocketMessage {
-    _id: string;
-    chatId: string;
-    sender:User;
-    receiver: User;
-    message: string;
-    createdAt: string;
-  }
+export interface BaseChat {
+  chat_id: string;
+  created_at: string;
+  lastmessage: Message;
+}
 
-  export interface SocketChat{
-    
-  }
+export interface IndividualChat extends BaseChat {
+  participant1: User;
+  participant2: User;
+}
+
+export interface GroupChat extends BaseChat {
+  name: string;
+  owner: User;
+  description: string;
+}
+
+export interface DetailedIndividualChat extends IndividualChat {
+  messages: Message[];
+}
+
+export interface DetailedGroupChat extends GroupChat {
+  messages: Message[];
+}
+
+export interface ChatData {
+  individualChats: IndividualChat[];
+  groupChats: GroupChat[];
+}
+
+export interface SocketMessage extends Message {
+  chat_id: string;
+  receiver: User;
+}
+
+export interface SocketChat {
+  chatId: string;
+}
