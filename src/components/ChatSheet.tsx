@@ -1,12 +1,16 @@
 import { Suspense, useState } from "react"
+
 import { Await } from "react-router-dom"
+
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CiSearch } from "react-icons/ci";
 import { TbFaceIdError } from "react-icons/tb";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useAppSelector } from "@/rtk/hooks";
+
 import { ChatData, GroupChat, IndividualChat, SocketMessage } from "@/utils/types"
+
 import { Skeleton } from "@/components/ui/skeleton";
 import NewChat from "@/components/NewChat";
 import ChatCard from "@/components/ChatCard";
@@ -22,14 +26,18 @@ export default function ChatSheet({ error, data, className }: { error: any; data
     const results = data.data;
 
     const renderCards = ({ data }: { data: ChatData }) => {
+
         const socketMessagesMap:Map<string, SocketMessage> = new Map();
+
         for (const msg of socketMessages) {
             socketMessagesMap.set(msg.chat_id, msg);
         }
 
         // Update individual chats with socket messages
+
         const updatedIndividualChats: IndividualChat[] = data.individualChats.map((chat) => {
             const socketMessage: (SocketMessage | undefined) = socketMessagesMap.get(chat.chat_id);
+
             if (socketMessage) {
                 return {
                     ...chat,
@@ -37,7 +45,9 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         _id: socketMessage._id,
                         message: socketMessage.message,
                         sender: socketMessage.sender,
+
                         created_at: socketMessage.created_at,
+
                     },
                 };
             }
@@ -45,8 +55,10 @@ export default function ChatSheet({ error, data, className }: { error: any; data
         });
 
         // Update group chats with socket messages
+
         const updatedGroupChats:GroupChat[] = data.groupChats.map((chat) => {
             const socketMessage: (SocketMessage | undefined) = socketMessagesMap.get(chat.chat_id);
+
             if (socketMessage) {
                 return {
                     ...chat,
@@ -54,7 +66,9 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         _id: socketMessage._id,
                         message: socketMessage.message,
                         sender: socketMessage.sender,
+
                         created_at: socketMessage.created_at,
+
                     },
                 };
             }
@@ -62,7 +76,9 @@ export default function ChatSheet({ error, data, className }: { error: any; data
         });
 
         // Filter and map individual chat cards
+
         const individualChatCards: JSX.Element[] = updatedIndividualChats
+
             .filter((chat) => {
                 const otherParticipant = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
                 return otherParticipant.username.toLowerCase().includes(searchText.toLowerCase());
@@ -87,7 +103,9 @@ export default function ChatSheet({ error, data, className }: { error: any; data
             });
 
         // Filter and map group chat cards
+
         const groupChatCards: JSX.Element[] = updatedGroupChats
+
             .filter((chat) => chat.name.toLowerCase().includes(searchText.toLowerCase()))
             .map((chat) => {
                 const sender = chat.lastmessage?.sender?.username || "";
@@ -110,6 +128,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
 
         const allCards: JSX.Element[] = [...individualChatCards, ...groupChatCards];
 
+
         return (
             <>
                 {allCards.length > 0 ? (
@@ -126,6 +145,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
 
     return (
         <div className={cn(className, "lg:flex lg:flex-col lg:w-1/3 lg:min-w-72 lg:max-w-96 bg-secondary lg:border-r-2")}>
+
             <section className="flex items-center justify-between border-b-2">
                 <div className="flex gap-4 justify-start py-5 px-2 lg:px-6 items-center ">
                     <Avatar>
@@ -172,4 +192,5 @@ export default function ChatSheet({ error, data, className }: { error: any; data
             </section>
         </div>
     )
+
 }

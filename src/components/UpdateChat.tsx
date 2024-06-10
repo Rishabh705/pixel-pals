@@ -78,6 +78,8 @@ export default function UpdateChat() {
   if (!id) throw new Error('Chat not found')
 
   return (
+
     <RenderChat results={results.data} method='put' chatId={id} />
   )
 }
+

@@ -1,5 +1,7 @@
+
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { LuPaperclip, LuMic } from "react-icons/lu";
 import { Input } from "./ui/input";
 import SentMsg from "./SentMsg";
@@ -10,6 +12,7 @@ import { DetailedIndividualChat, DetailedGroupChat, Message, SocketMessage } fro
 import { socket } from "@/lib/socket";
 import { clear } from "@/rtk/slices/socketMsgSlice";
 import { Skeleton } from "./ui/skeleton";
+
 import Emoji from "./Emoji";
 
 export default function RenderChat({ results, method, chatId }: { results?: any, method: any, chatId: string }) {
@@ -17,6 +20,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
   const socketMessages: SocketMessage[] = useAppSelector((state) => state.socketMsgs);
   const messageContainerRef = useRef<null | HTMLDivElement>(null);
   const [text, setText] = useState<string>('');
+
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const name: string = searchParams.get('name') || 'Title';
@@ -25,9 +29,11 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
 
     const scrollToBottom = () => {     
       messageContainerRef.current?.scrollIntoView({ behavior: "smooth" })
+
     }
 
     dispatch(clear(1));
+
 
     scrollToBottom();
 
@@ -35,21 +41,26 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
       scrollToBottom();
     });
 
+
     // Cleanup on unmount
     return () => {
       socket.off('receive-message', () => { });
     };
   }, [chatId, dispatch]);
 
+
   const renderChats = ({ data }: { data: DetailedIndividualChat | DetailedGroupChat }) => {
 
     const socketMessagesMap: Map<string, SocketMessage> = new Map();
+
     for (const msg of socketMessages) {
       socketMessagesMap.set(msg._id, msg);
     }
 
+
     const filteredChatMessages: Message[] = data.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
     const filteredSocketMessages: SocketMessage[] = socketMessagesMap.size > 0 ? [...socketMessagesMap.values()] : [];
+
 
     const allMessages: (Message | SocketMessage)[] = [...filteredChatMessages, ...filteredSocketMessages].sort((a, b) => {
       const d1 = new Date(a.created_at);
@@ -89,12 +100,16 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
         </Avatar>
         <div>
           <h1 className="text-lg font-semibold text-card-foreground">{name}</h1>
+
           <p className="text-xs font-medium text-card-foreground flex items-center">
+
             typing...
           </p>
         </div>
       </section>
+
       <section className="bg-slate-100 flex-1 p-3 space-y-8 overflow-y-scroll scrollbar">
+
         <Suspense fallback={
           <>
             {
@@ -118,6 +133,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
             }
           </>
         }>
+
           <Await resolve={results}>
             {renderChats}
           </Await>
@@ -130,10 +146,13 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
           <LuPaperclip size={20} />
         </span>
         <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={(e) => setText(e.target.value)} />
+
         <span className="p-2 bg-primary rounded-full">
           <LuMic size={20} color="aliceblue" />
         </span>
       </Form>
     </div>
   )
+
 }
+
