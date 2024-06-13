@@ -9,7 +9,7 @@ const Whiteboard: React.FC = () => {
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [searchParams] = useSearchParams()
   const userId:string|null = useAppSelector(state => state.auth.userId)
-  const reciever:string = searchParams.get('re') || ''
+  const chat_id:string = searchParams.get('chat_id') || ''
 
 
   const resizeCanvas = useCallback(() => {
@@ -51,9 +51,9 @@ const Whiteboard: React.FC = () => {
     if(userId){
       socket.emit('register-user', userId)
     }
-    const handleDrawingEvent = (data: { x: number; y: number; type: string, reciever: string }) => {
+    const handleDrawingEvent = (data: { x: number; y: number; type: string, chat_id: string }) => {
       const canvas = canvasRef.current;
-      if (canvas) {
+      if (canvas && chat_id===data.chat_id) {
         const context = canvas.getContext('2d');
         if (context) {
           if (data.type === 'start') {
@@ -82,7 +82,7 @@ const Whiteboard: React.FC = () => {
         context.beginPath();
         context.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         setIsDrawing(true);
-        socket.emit('drawing', { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, type: 'start', reciever: reciever });
+        socket.emit('drawing', { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, type: 'start', chat_id: chat_id });
       }
     }
   };
@@ -95,7 +95,7 @@ const Whiteboard: React.FC = () => {
       if (context) {
         context.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         context.stroke();
-        socket.emit('drawing', { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, type: 'draw', reciever: reciever });
+        socket.emit('drawing', { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, type: 'draw', chat_id: chat_id });
       }
     }
   };

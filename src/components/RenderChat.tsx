@@ -22,7 +22,6 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const name: string = searchParams.get('name') || 'Title';
-  const reciever: string = searchParams.get('re') || 're';
 
   useEffect(() => {
     socket.on('typing', (data: { chat_id: string, sender: string }) => {
@@ -125,7 +124,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
             </p>
           </div>
         </section>
-        <Link to={`/board?re=${reciever}`} className=" hover:bg-secondary rounded-full p-3 hover:cursor-pointer">
+        <Link to={`/board?chat_id=${chatId}`} className=" hover:bg-secondary rounded-full p-3 hover:cursor-pointer">
           <img src='/board.svg' className="h-6"/>
         </Link>
       </div>
