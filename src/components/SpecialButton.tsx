@@ -6,7 +6,7 @@ export default function SpecialButton({ className, link, text, Icon }: { classNa
         <div className={cn(className)}>
             <Link
                 to={link}
-                className={cn(className, 'text-sm md:text-base text-foreground font-semibold text-white bg-gradient-to-br from-orange-600 to-orange-300 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 text-center rounded-full px-5 py-2.5 lg:px-8 lg:py-3')}
+                className={cn(className, 'text-sm md:text-base text-foreground font-semibold text-white bg-gradient-to-br hover:bg-gradient-to-bl focus:ring-4 focus:outline-none text-center rounded-full px-5 py-2.5 lg:px-8 lg:py-3')}
             >
                 {text}
                 {Icon && <Icon />}

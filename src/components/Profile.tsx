@@ -60,7 +60,7 @@ export default function Profile() {
                         <Link to='/login' className='text-sm md:text-base text-foreground font-semibold'>
                             Login
                         </Link>
-                        <SpecialButton link='/register' text='Get Started' className='hidden md:block' />
+                        <SpecialButton link='/register' text='Get Started' className='hidden md:block from-orange-600 to-orange-300 focus:ring-pink-200 dark:focus:ring-pink-800' />
                         <Hamburger className='' />
                     </div>
                 )

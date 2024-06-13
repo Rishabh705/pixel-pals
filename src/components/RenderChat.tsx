@@ -1,70 +1,88 @@
-
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import { LuPaperclip, LuMic } from "react-icons/lu";
 import { Input } from "./ui/input";
 import SentMsg from "./SentMsg";
 import RecievedMsg from "./RecievedMsg";
 import { useAppSelector, useAppDispatch } from "@/rtk/hooks";
-import { Await, Form, useSearchParams } from "react-router-dom";
+import { Await, Form, useSearchParams, Link } from "react-router-dom";
 import { DetailedIndividualChat, DetailedGroupChat, Message, SocketMessage } from "@/utils/types";
 import { socket } from "@/lib/socket";
 import { clear } from "@/rtk/slices/socketMsgSlice";
 import { Skeleton } from "./ui/skeleton";
-
 import Emoji from "./Emoji";
 
 export default function RenderChat({ results, method, chatId }: { results?: any, method: any, chatId: string }) {
-  const currentUser: (string | null) = useAppSelector((state) => state.auth.userId);
+  const currentUser: string | null = useAppSelector((state) => state.auth.userId);
   const socketMessages: SocketMessage[] = useAppSelector((state) => state.socketMsgs);
-  const messageContainerRef = useRef<null | HTMLDivElement>(null);
+  const messageContainerRef = useRef<HTMLDivElement>(null);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
   const [text, setText] = useState<string>('');
-
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const name: string = searchParams.get('name') || 'Title';
 
   useEffect(() => {
-
-    const scrollToBottom = () => {     
-      messageContainerRef.current?.scrollIntoView({ behavior: "smooth" })
-
-    }
-
-    dispatch(clear(1));
-
-
-    scrollToBottom();
-
-    socket.on('receive-message', () => {
-      scrollToBottom();
+    socket.on('typing', (data: { chat_id: string, sender: string }) => {
+      if (data.chat_id === chatId && data.sender !== currentUser) {
+        setIsTyping(true);
+      }
     });
 
+    socket.on('stop-typing', (data: { chat_id: string, sender: string }) => {
+      if (data.chat_id === chatId && data.sender !== currentUser) {
+        setIsTyping(false);
+      }
+    });
 
     // Cleanup on unmount
     return () => {
-      socket.off('receive-message', () => { });
+      socket.off('typing');
+      socket.off('stop-typing');
+    };
+  }, [chatId, currentUser]);
+
+  useEffect(() => {
+    const scrollToBottom = () => {
+      messageContainerRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    dispatch(clear(1));
+    scrollToBottom();
+
+    socket.on('receive-message', scrollToBottom);
+
+    // Cleanup on unmount
+    return () => {
+      socket.off('receive-message', scrollToBottom);
     };
   }, [chatId, dispatch]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    socket.emit('typing', { sender: currentUser, chat_id: chatId });
+
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('stop-typing', { sender: currentUser, chat_id: chatId });
+    }, 3000);
+  };
 
   const renderChats = ({ data }: { data: DetailedIndividualChat | DetailedGroupChat }) => {
-
-    const socketMessagesMap: Map<string, SocketMessage> = new Map();
-
+    const socketMessagesMap = new Map<string, SocketMessage>();
     for (const msg of socketMessages) {
       socketMessagesMap.set(msg._id, msg);
     }
 
-
     const filteredChatMessages: Message[] = data.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
     const filteredSocketMessages: SocketMessage[] = socketMessagesMap.size > 0 ? [...socketMessagesMap.values()] : [];
-
-
     const allMessages: (Message | SocketMessage)[] = [...filteredChatMessages, ...filteredSocketMessages].sort((a, b) => {
-      const d1 = new Date(a.created_at);
-      const d2 = new Date(b.created_at);
+      const d1: Date = new Date(a.created_at);
+      const d2: Date = new Date(b.created_at);
       return d1.getTime() - d2.getTime();
     });
 
@@ -93,23 +111,25 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
 
   return (
     <div className='flex-1 flex flex-col'>
-      <section className="flex gap-4 justify-start py-5 px-4 pl-14 md:pl-14 md:px-6 lg:px-8 items-center border-b-2">
-        <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
-        <div>
-          <h1 className="text-lg font-semibold text-card-foreground">{name}</h1>
-
-          <p className="text-xs font-medium text-card-foreground flex items-center">
-
-            typing...
-          </p>
-        </div>
-      </section>
+      <div className="flex justify-between items-center px-4 md:px-6 lg:px-8">
+        <section className="flex gap-4 justify-start py-5 px-4 pl-10 lg:pl-0 items-center">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-lg font-semibold text-card-foreground">{name}</h1>
+            <p className="text-xs font-medium text-card-foreground flex items-center">
+              {isTyping ? "typing..." : ""}
+            </p>
+          </div>
+        </section>
+        <Link to={`/board?chat_id=${chatId}`} className=" hover:bg-secondary rounded-full p-3 hover:cursor-pointer">
+          <img src='/board.svg' className="h-6"/>
+        </Link>
+      </div>
 
       <section className="bg-slate-100 flex-1 p-3 space-y-8 overflow-y-scroll scrollbar">
-
         <Suspense fallback={
           <>
             {
@@ -133,7 +153,6 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
             }
           </>
         }>
-
           <Await resolve={results}>
             {renderChats}
           </Await>
@@ -145,14 +164,11 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
         <span className="p-2 bg-secondary rounded-full">
           <LuPaperclip size={20} />
         </span>
-        <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={(e) => setText(e.target.value)} />
-
+        <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={handleChange} />
         <span className="p-2 bg-primary rounded-full">
           <LuMic size={20} color="aliceblue" />
         </span>
       </Form>
     </div>
-  )
-
+  );
 }
-
