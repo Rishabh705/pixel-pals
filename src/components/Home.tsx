@@ -24,7 +24,7 @@ export default function Home() {
   })
   const reviewCards: JSX.Element[] = reviews.map(review => {
     return (
-      <ReviewCard key={review.id} name={review.name} position={review.position} company={review.company} review={review.review}/>
+      <ReviewCard key={review.id} name={review.name} position={review.position} company={review.company} review={review.review} />
     )
   })
   return (
@@ -38,7 +38,10 @@ export default function Home() {
             <p className='mt-6 text-md max-w-prose text-muted-foreground'>
               An innovative app that offers seamless chat and collaborative whiteboard features, enabling you to connect and create effortlessly from any location.
             </p>
-            <SpecialButton link={`/chats`} text='Start Chatting Now' Icon={ArrowRight} className=' mt-10' />
+            <div className='flex gap-4'>
+              <SpecialButton link={`/chats`} text='Start Chatting Now' Icon={ArrowRight} className='from-orange-600 to-orange-300 focus:ring-pink-200 dark:focus:ring-pink-800 mt-10' />
+              <SpecialButton link={`/board`} text='Start Sketching Now' Icon={ArrowRight} className='from-violet-500 to-fuchsia-500 focus:ring-pink-200 dark:focus:ring-pink-800 mt-10' />
+            </div>
           </section>
           <section className='hidden lg:block flex-1 relative'>
             <AnimatedSVG />
@@ -59,7 +62,7 @@ export default function Home() {
           {reviewCards}
         </div>
       </MaxWidthWrapper>
-      
+
       <MaxWidthWrapper className='bg-secondary py-14'>
         <div className='flex flex-col gap-8 lg:gap-1 lg:flex-row'>
           <div className='w-full lg:w-1/2 flex flex-col gap-3 '>
@@ -71,7 +74,7 @@ export default function Home() {
               <Button className='rounded-full px-6'>Submit</Button>
             </div>
           </div>
-          <CustomAccordion/>
+          <CustomAccordion />
         </div>
       </MaxWidthWrapper>
     </>

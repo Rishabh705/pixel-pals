@@ -67,7 +67,7 @@ export default function ChatLayout() {
     useEffect(() => {
 
         if (userId) {
-            socket.emit('register-user', userId);
+            socket.emit('register-user', userId);            
         }
 
         const handleMessage = (data: SocketMessage) => {
@@ -89,7 +89,7 @@ export default function ChatLayout() {
     return (
         <div className="flex h-screen border-b-2">
             <Sheet>
-                <SheetTrigger className='flex lg:hidden absolute left-3 top-7'>
+                <SheetTrigger className='flex lg:hidden absolute left-3 top-6'>
                     <GiHamburgerMenu color='#1a1a1a' size={30} />
                 </SheetTrigger>
                 <SheetContent side='left' className="bg-secondary w-screen">
