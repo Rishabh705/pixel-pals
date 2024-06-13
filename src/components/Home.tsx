@@ -40,7 +40,6 @@ export default function Home() {
             </p>
             <div className='flex gap-4'>
               <SpecialButton link={`/chats`} text='Start Chatting Now' Icon={ArrowRight} className='from-orange-600 to-orange-300 focus:ring-pink-200 dark:focus:ring-pink-800 mt-10' />
-              <SpecialButton link={`/board`} text='Start Sketching Now' Icon={ArrowRight} className='from-violet-500 to-fuchsia-500 focus:ring-pink-200 dark:focus:ring-pink-800 mt-10' />
             </div>
           </section>
           <section className='hidden lg:block flex-1 relative'>
