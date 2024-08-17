@@ -5,7 +5,7 @@ import Profile from './Profile';
 
 const Header = () => {
   return (
-    <header className='bg-background sticky top-0 inset-x-0 z-50'>
+    <header className='bg-background sticky top-0 inset-x-0 z-50 shadow-md'>
       <MaxWidthWrapper>
         <div className='flex items-center justify-between py-4 lg:py-6'>
           <Link to='/' className='flex items-center gap-6'>

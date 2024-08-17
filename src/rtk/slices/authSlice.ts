@@ -6,7 +6,8 @@ const initialState: AuthState = {
     userId: null,
     email: null,
     username: null,
-    token: null,
+    accessToken: null,
+
 }
 
 export const authSlice = createSlice({
@@ -17,15 +18,13 @@ export const authSlice = createSlice({
             state.userId = action.payload.userId
             state.email = action.payload.email
             state.username = action.payload.username
-            state.token = action.payload.token
+            state.accessToken = action.payload.accessToken
         },
         logout: (state) => {
             state.userId = null
-
             state.email = null
-
             state.username = null
-            state.token = null
+            state.accessToken = null
         }
     }
 })

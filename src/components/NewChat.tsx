@@ -25,7 +25,7 @@ import AddContact from "./AddContact";
 
 export default function NewChat({ contacts, error, className }: { contacts: any, error: string, className?: string }) {
   const [searchText, setSearchText] = React.useState<string>("")
-  const token = useAppSelector((state) => state.auth.token)
+  const token = useAppSelector((state) => state.auth.accessToken)
   const navigate = useNavigate()
 
   const createOneonOneChat = async (contact: User) => {

@@ -5,7 +5,7 @@ export default function Error() {
   const error: any = useRouteError()
 
   return (
-    <div className="flex justify-center items-center w-full relative">
+    <div className="flex justify-center items-center w-full relative my-52">
       <span className="absolute bg-secondary w-[500px] h-[500px] z-0 rounded-full " />
       <div className="flex flex-col justify-center items-center gap-4 z-10">
         <BiSolidMessageAltError color="red" size={70} />

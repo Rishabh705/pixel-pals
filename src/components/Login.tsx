@@ -4,20 +4,11 @@ import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
-import { AuthState } from "@/utils/types";
+import { AuthState, JWTPayload } from "@/utils/types";
 import { login } from "@/rtk/slices/authSlice";
-import { jwtDecode, JwtPayload } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { store } from "@/rtk/store";
 
-interface JWTPayload extends JwtPayload{
-    UserInfo:{
-        username:string;
-
-        email:string;
-
-        _id:string
-    }
-}
 
 export async function loader({ request }: { request: Request }) {
     const url: URL = new URL(request.url)
@@ -35,24 +26,22 @@ export async function action({ request }: { request: Request }) {
         const password: (FormDataEntryValue | null) = form.get('password')
 
         const res = await loginUser({ email, password })
-
-
+        
         //decode the token
         const decoded: JWTPayload = jwtDecode(res.accessToken)
 
         const authData: AuthState = {
-
             userId : decoded.UserInfo._id,
             email : decoded.UserInfo.email,
             username : decoded.UserInfo.username,
-            token : res.accessToken
+            accessToken: res.accessToken,
         }
             
 
         //store the data in the store
         store.dispatch(login(authData))
         
-        // localStorage.setItem("loggedin", String(true))
+        localStorage.setItem("loggedin", JSON.stringify(authData))
 
         return redirect(pathname)
 
