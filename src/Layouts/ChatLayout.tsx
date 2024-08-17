@@ -38,8 +38,9 @@ export async function action({ request }: { request: Request }) {
         const intent: string = form.get('intent')?.toString() || ''
 
         if (intent === 'create-contact') {
-            const email: string = form.get('email')?.toString() || ''
-            await addContact(token, email)
+            const email: string = form.get('email')?.toString() || ''            
+            const res = await addContact(token, email)
+            console.log(res)
         }
 
         else if (intent === 'create-group') {

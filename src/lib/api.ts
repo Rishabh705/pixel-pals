@@ -19,7 +19,7 @@ export async function loginUser(formdata: { email: (FormDataEntryValue | null), 
 
     if (!res.ok) {
         throw {
-            message: "Failed to login. Please Try again.",
+            message: data.message || "Failed to login. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -43,7 +43,7 @@ export async function registerUser(formdata: { username: string, email: string, 
 
     if (!res.ok) {
         throw {
-            message: "Failed to register. Please Try agian.",
+            message: data.message || "Failed to register. Please Try agian.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -83,7 +83,7 @@ export async function getChats(userID: string, token: string): Promise<any> {
 
     if (!res.ok) {
         throw {
-            message: "Failed to fetch your chats. Refresh the page",
+            message: data.message || "Failed to fetch your chats. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -106,7 +106,7 @@ export async function getChat(chatID: string, token: string): Promise<any> {
 
     if (!res.ok) {
         throw {
-            message: "Failed to fetch this chat. Refresh the page",
+            message: data.message || "Failed to fetch this chat. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -132,7 +132,7 @@ export async function createChat(token: string, receiverID: string): Promise<any
 
     if (!res.ok) {
         throw {
-            message: "Failed to create chat. Please Try again.",
+            message: data.message || "Failed to create chat. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -159,7 +159,7 @@ export async function addContact(token: string, email: string): Promise<any> {
 
     if (!res.ok) {
         throw {
-            message: "Failed to create contact. Please Try again.",
+            message: data.message || "Failed to create contact. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -181,7 +181,7 @@ export async function getContacts(userID: string, token: string): Promise<any> {
 
     if (!res.ok) {
         throw {
-            message: "Failed to fecth your contacts. Refresh the page",
+            message: data.message || "Failed to fecth your contacts. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -216,7 +216,7 @@ export async function sendMessage(message: string, token: string, messageID: str
 
     if (!res.ok) {
         throw {
-            message: "Failed to send message. Please Try again.",
+            message: data.message || "Failed to send message. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -247,7 +247,7 @@ export async function addGroup(token: string, name: string, description: string,
 
     if (!res.ok) {
         throw {
-            message: "Failed to create group. Please Try again.",
+            message: data.message || "Failed to create group. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
