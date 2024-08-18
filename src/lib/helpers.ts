@@ -117,12 +117,8 @@ export async function fetchWithAuth(url: string, endpoint: string, options: Requ
         } else {
             // Handle refresh failure (e.g., log out the user)
             // console.error('Failed to refresh token. Redirecting to login.');
-            throw {
-                redirect: true,
-                message: 'Authentication failed. Please log in again.',
-                statusText: "Forbidden",
-                status: 401,
-            }
+            localStorage.removeItem("loggedin")
+            window.location.href = '/login?message=Session expired. Please log in again.';
         }
     }
 
