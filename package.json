@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -20,11 +20,10 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@reduxjs/toolkit": "^2.2.5",
+    "@tldraw/sync": "^2.4.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-
     "emoji-picker-react": "^4.9.4",
-
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.378.0",
     "react": "^18.2.0",
@@ -35,6 +34,7 @@
     "socket.io-client": "^4.7.5",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
+    "tldraw": "^2.4.4",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

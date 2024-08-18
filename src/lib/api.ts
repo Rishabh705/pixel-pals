@@ -1,3 +1,5 @@
+import { fetchWithAuth } from './helpers'
+
 // fetch search results
 const url = import.meta.env.VITE_SERVER
 
@@ -17,7 +19,7 @@ export async function loginUser(formdata: { email: (FormDataEntryValue | null), 
 
     if (!res.ok) {
         throw {
-            message: data.detail || "Failed to login",
+            message: data.message || "Failed to login. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -27,7 +29,7 @@ export async function loginUser(formdata: { email: (FormDataEntryValue | null), 
 }
 
 
-export async function registerUser(formdata: { username: string, email:string, password: string }): Promise<any> {
+export async function registerUser(formdata: { username: string, email: string, password: string }): Promise<any> {
 
     const res: Response = await fetch(`${url}/api/auth/register/`, {
         method: 'POST',
@@ -41,7 +43,7 @@ export async function registerUser(formdata: { username: string, email:string, p
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to register",
+            message: data.message || "Failed to register. Please Try agian.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -75,13 +77,13 @@ export async function getChats(userID: string, token: string): Promise<any> {
             'Authorization': `Bearer ${token}`
         }
     }
-    const res: Response = await fetch(`${url}/api/chats?userID=${userID}`, options)
+    const res: Response = await fetchWithAuth(url, `/api/chats?userID=${userID}`, options)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to get chats",
+            message: data.message || "Failed to fetch your chats. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -98,13 +100,13 @@ export async function getChat(chatID: string, token: string): Promise<any> {
         }
     }
 
-    const res: Response = await fetch(`${url}/api/chats/${chatID}`, options)
+    const res: Response = await fetchWithAuth(url, `/api/chats/${chatID}`, options)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to get chat",
+            message: data.message || "Failed to fetch this chat. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -124,13 +126,13 @@ export async function createChat(token: string, receiverID: string): Promise<any
             receiverID: receiverID
         })
     }
-    const res: Response = await fetch(`${url}/api/chats/one-on-one`, options)
+    const res: Response = await fetchWithAuth(url, `/api/chats/one-on-one`, options)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to create chat",
+            message: data.message || "Failed to create chat. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -151,13 +153,13 @@ export async function addContact(token: string, email: string): Promise<any> {
             email: email
         })
     }
-    const res: Response = await fetch(`${url}/api/contacts`, options)
+    const res: Response = await fetchWithAuth(url, `/api/contacts`, options)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to create contact",
+            message: data.message || "Failed to create contact. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -173,13 +175,13 @@ export async function getContacts(userID: string, token: string): Promise<any> {
             'Authorization': `Bearer ${token}`
         },
     }
-    const res: Response = await fetch(`${url}/api/contacts?userId=${userID}`, options)
+    const res: Response = await fetchWithAuth(url, `/api/contacts?userId=${userID}`, options)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to get contacts",
+            message: data.message || "Failed to fecth your contacts. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -189,7 +191,7 @@ export async function getContacts(userID: string, token: string): Promise<any> {
 }
 
 
-export async function sendMessage(message: string, token: string, messageID:string, chatID?: string): Promise<any> {
+export async function sendMessage(message: string, token: string, messageID: string, chatID?: string): Promise<any> {
 
     let method = 'POST'
 
@@ -208,13 +210,13 @@ export async function sendMessage(message: string, token: string, messageID:stri
             messageID: messageID
         })
     }
-    const res: Response = await fetch(`${url}/api/chats/${chatID}`, options)
+    const res: Response = await fetchWithAuth(url, `/api/chats/${chatID}`, options)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to send message",
+            message: data.message || "Failed to send message. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -224,7 +226,7 @@ export async function sendMessage(message: string, token: string, messageID:stri
 
 }
 
-export async function addGroup(token:string, name: string, description:string, members: FormDataEntryValue[]): Promise<any> {
+export async function addGroup(token: string, name: string, description: string, members: FormDataEntryValue[]): Promise<any> {
 
 
     const options = {
@@ -239,13 +241,13 @@ export async function addGroup(token:string, name: string, description:string, m
             members: members
         })
     }
-    const res: Response = await fetch(`${url}/api/chats/group`, options)
+    const res: Response = await fetchWithAuth(url, `/api/chats/group`, options)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to create group",
+            message: data.message || "Failed to create group. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }

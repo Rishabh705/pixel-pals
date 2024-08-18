@@ -6,7 +6,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet"
-import { IoMdHeart } from "react-icons/io";
+// import { IoMdHeart } from "react-icons/io";
 import { LuLogOut } from "react-icons/lu"
 import { Link, NavigateFunction, useNavigate } from "react-router-dom"
 // import { buttonVariants } from "./ui/button";
@@ -15,17 +15,37 @@ import Hamburger from './Hamburger';
 import { logoutUser } from "@/lib/api";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import { logout } from "@/rtk/slices/authSlice";
+import { AuthState } from "@/utils/types";
 
 export default function Profile() {
-    const isLogged:(string|null) = useAppSelector(state => state.auth.token)
-    const navigate:NavigateFunction= useNavigate();
+    let token:(string|null) = useAppSelector(state => state.auth.accessToken)
+    const localstorage = localStorage.getItem('loggedin')
+
+    if (localstorage) {
+        const authData: AuthState = JSON.parse(localstorage);
+        
+        // If the token in Redux state is null, use the one from local storage
+        if (!token && authData.accessToken) {
+            token = authData.accessToken;
+        }
+    }
+
+    const isLogged: boolean = token!==null
+
+    const navigate: NavigateFunction = useNavigate();
     const dispatch = useAppDispatch()
-    
-    const handleLogout: () => void = async() =>{
-        await logoutUser();
-        dispatch(logout())
-        localStorage.removeItem('loggedin');
-        navigate('/');
+    const authData: AuthState = useAppSelector(state => state.auth)
+
+    const handleLogout: () => void = async () => {
+        try{
+            await logoutUser();
+            dispatch(logout())
+            localStorage.removeItem('loggedin')            
+            navigate('/');
+        }
+        catch(error: any){
+            console.error(error.message)
+        }
     }
     return (
         <div>
@@ -38,19 +58,21 @@ export default function Profile() {
                         <SheetContent>
                             <SheetHeader className='mt-6 flex flex-col gap-4'>
                                 <div className='flex flex-col items-start'>
-                                    <SheetTitle>Razor</SheetTitle>
-                                    <p>razor47@hitman.com</p>
+                                    <SheetTitle>{authData?.username || 'RAZOR'}</SheetTitle>
+                                    <p>{authData?.email || 'razor47@hitman.com'}</p>
                                 </div>
                                 <div className='flex flex-col'>
-                                    <div className='flex gap-4 pr-6 hover:bg-slate-200 h-full pt-2 pb-2'>
+                                    {/* <div className='flex gap-4 pr-6 hover:bg-slate-200 h-full pt-2 pb-2'>
                                         <IoMdHeart size={22} />
                                         <Link to='/' className="flex-1 flex justify-between">
                                             Liked articles
                                             <p>0</p>
                                         </Link>
-                                    </div>
-                                    <LuLogOut size={22} />
-                                    <button onClick={handleLogout}>Logout</button>
+                                    </div> */}
+                                    <span className="flex items-center gap-2 cursor-pointer" onClick={handleLogout}>
+                                        <LuLogOut size={22} />
+                                        <button>Logout</button>
+                                    </span>
                                 </div>
                             </SheetHeader>
                         </SheetContent>

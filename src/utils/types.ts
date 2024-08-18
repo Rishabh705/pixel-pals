@@ -1,8 +1,10 @@
+import { JwtPayload } from "jwt-decode";
+
 export interface AuthState {
+  accessToken: string|null;
   userId : string| null;
   email : string| null;
   username : string| null;
-  token : string| null;
 }
 export interface User {
   _id: string;
@@ -54,4 +56,14 @@ export interface SocketMessage extends Message {
 
 export interface SocketChat {
   chatId: string;
+}
+
+export interface JWTPayload extends JwtPayload{
+  UserInfo:{
+      username:string;
+
+      email:string;
+
+      _id:string
+  }
 }

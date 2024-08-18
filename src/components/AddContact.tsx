@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BiSolidError } from "react-icons/bi";
 import { useNavigation, Navigation, Form } from "react-router-dom";
 import CustomCard from "./CustomCard";
@@ -17,9 +18,10 @@ import { Button } from "./ui/button";
 
 export default function AddContact({ error }: { error: string }) {
     const status: Navigation = useNavigation()
+    const [open, setOpen] = useState<boolean>(false)
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={(open) => setOpen(open)}> 
             <DialogTrigger asChild>
                 <div className="py-4 px-4 bg-secondary flex items-center gap-4 rounded-xl hover:bg-background hover:cursor-pointer w-full">
                     <CustomCard avatarImg="https://github.com/shadcn.png" avatarFallback="CN" title="Add new contact" />

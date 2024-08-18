@@ -78,7 +78,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
       socketMessagesMap.set(msg._id, msg);
     }
 
-    const filteredChatMessages: Message[] = data.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
+    const filteredChatMessages: Message[] = data?.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
     const filteredSocketMessages: SocketMessage[] = socketMessagesMap.size > 0 ? [...socketMessagesMap.values()] : [];
     const allMessages: (Message | SocketMessage)[] = [...filteredChatMessages, ...filteredSocketMessages].sort((a, b) => {
       const d1: Date = new Date(a.created_at);
@@ -86,7 +86,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
       return d1.getTime() - d2.getTime();
     });
 
-    const messages: JSX.Element[] = allMessages.map((message) => (
+    const messages: JSX.Element[] = allMessages?.map((message) => (
       <div key={message._id} className={`flex gap-4 ${currentUser === message.sender?._id ? 'justify-end' : 'justify-start'}`}>
         {currentUser === message.sender?._id ? (
           <SentMsg text={message.message} time={message.created_at} participant={message.sender?.username} />
@@ -94,7 +94,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
           <RecievedMsg text={message.message} time={message.created_at} participant={message.sender?.username} />
         )}
       </div>
-    ));
+    ))||[];
 
     return (
       <>

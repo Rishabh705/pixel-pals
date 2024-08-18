@@ -15,7 +15,7 @@ import '../styles/chatlayout.css'
 export async function loader({ request }: { request: Request }) {
     await requireAuth(request)
     const userId: (string | null) = store.getState().auth.userId
-    const token: (string | null) = store.getState().auth.token
+    const token: (string | null) = store.getState().auth.accessToken
 
     if (userId === null || token === null) return { data: [] }
 
@@ -30,7 +30,7 @@ export async function action({ request }: { request: Request }) {
 
     try {
         const form: FormData = await request.formData()
-        const token: (string | null) = store.getState().auth.token
+        const token: (string | null) = store.getState().auth.accessToken
 
         if (!token) throw new Error("User not authenticated.")
 
@@ -38,16 +38,16 @@ export async function action({ request }: { request: Request }) {
         const intent: string = form.get('intent')?.toString() || ''
 
         if (intent === 'create-contact') {
-            const email: string = form.get('email')?.toString() || ''
-            await addContact(token, email)
+            const email: string = form.get('email')?.toString() || ''            
+            const res = await addContact(token, email)
+            console.log(res)
         }
 
         else if (intent === 'create-group') {
             const name = form.get('name')?.toString() || ''
             const description = form.get('description')?.toString() || ''
             const members = form.getAll('members')|| []
-            const res = await addGroup(token, name, description, members);
-            console.log("Group created", res);
+            await addGroup(token, name, description, members);
         }
 
         return null

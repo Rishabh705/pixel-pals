@@ -11,7 +11,7 @@ import RenderChat from "./RenderChat";
 
 export async function loader({ params, request }: { params: any, request: Request }) {
   await requireAuth(request)
-  const token: (string | null) = store.getState().auth.token
+  const token: (string | null) = store.getState().auth.accessToken
   if (!token) return { data: [] }
 
   socket.emit('join-chat', params.id);
@@ -24,7 +24,7 @@ export async function action({ request, params }: { request: Request, params: an
   try {
     const form: FormData = await request.formData()
     const message: string = form.get('message')?.toString() || ''
-    const token: (string | null) = store.getState().auth.token
+    const token: (string | null) = store.getState().auth.accessToken
     const username: (string | null) = store.getState().auth.username
     const id: (string | null) = store.getState().auth.userId
 
