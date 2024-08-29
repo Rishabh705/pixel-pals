@@ -23,8 +23,9 @@ import { AddGroup } from "./AddGroup";
 import AddContact from "./AddContact";
 
 
-export default function NewChat({ contacts, error, className }: { contacts: any, error: string, className?: string }) {
+export default function NewChat({ contacts, error, className }: { contacts: any, error:  {message:string, success:boolean}, className?: string }) {
   const [searchText, setSearchText] = React.useState<string>("")
+  const [open, setOpen] = React.useState<boolean>(false)
   const token = useAppSelector((state) => state.auth.accessToken)
   const navigate = useNavigate()
 
@@ -33,7 +34,7 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
     if (!token) throw new Error("User not authenticated.");
     const res = await createChat(token, contact._id);
     navigate(`/chats/${res._id}?re=${contact._id}&&name=${contact.username}`);
-
+    setOpen(false);
     // Emit socket event to join individual chat room
     socket.emit("join-chat", res._id);
   };
@@ -65,7 +66,7 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
   }
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={(open) => setOpen(open)}>
       <SheetTrigger className={cn(className)}>
         <BsSendPlusFill size={22} />
       </SheetTrigger>

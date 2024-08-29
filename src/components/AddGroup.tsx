@@ -19,7 +19,7 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 
 
-export function AddGroup({ error, contacts }: { error: string, contacts: any }) {
+export function AddGroup({ error, contacts }: { error: {message:string, success:boolean}, contacts: any }) {
     const [searchText, setSearchText] = React.useState<string>("");
     const [members, setMembers] = React.useState<string[]>([]);
     const status: Navigation = useNavigation();
@@ -120,10 +120,10 @@ export function AddGroup({ error, contacts }: { error: string, contacts: any }) 
                             </Suspense>
                         </section>
 
-                        {error && (
+                        {error && !error.success && (
                             <div className="flex gap-4 p-2.5 bg-red-200 rounded-md">
                                 <BiSolidError className="h-5 w-5 text-red-600" />
-                                <p className="text-sm leading-5 text-red-600">{error}</p>
+                                <p className="text-sm leading-5 text-red-600">{error.message}</p>
                             </div>
                         )}
                     </div>

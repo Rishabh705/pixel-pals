@@ -3,12 +3,15 @@ import { Button } from "./ui/button";
 
 export default function Error() {
   const error: any = useRouteError()
+  if(error){
+    console.error(error)
+  }
   const navigate:NavigateFunction = useNavigate(); 
   const handleGoBack = () => {
     navigate(-1); // Goes back one step in history
   }; 
   return (
-    <div className="relative h-screen bg-gray-100 flex justify-center items-center">
+    <div className="relative h-screen w-screen bg-gray-100 flex justify-center items-center">
       <div className="text-center max-w-lg w-full">
         <div className="absolute inset-0 flex justify-center items-center -z-10">
           <div className="space-y-4 transform translate-y-1/2">
@@ -19,7 +22,7 @@ export default function Error() {
         </div>
         <h1 className="text-6xl md:text-7xl font-bold uppercase text-gray-800 mb-2">Oops!</h1>
         <h2 className=" text-base md:text-lg font-semibold text-gray-800 mb-6">
-          Error {error.status}: {error.message}
+          Error {error?.status}: {error?.message}
         </h2>
         <Button
           onClick={handleGoBack}

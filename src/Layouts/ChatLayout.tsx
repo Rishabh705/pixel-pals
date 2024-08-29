@@ -13,6 +13,8 @@ import { GiHamburgerMenu } from "react-icons/gi";
 import '../styles/chatlayout.css'
 
 export async function loader({ request }: { request: Request }) {
+    console.log("chatlayout loader..");
+
     await requireAuth(request)
     const userId: (string | null) = store.getState().auth.userId
     const token: (string | null) = store.getState().auth.accessToken
@@ -22,11 +24,13 @@ export async function loader({ request }: { request: Request }) {
     const data = getChats(userId, token)
     const contacts = getContacts(userId, token)
 
+
     return defer({ data: data, contacts: contacts })
 
 }
 
 export async function action({ request }: { request: Request }) {
+    console.log("chatlayout action..");
 
     try {
         const form: FormData = await request.formData()
@@ -38,21 +42,20 @@ export async function action({ request }: { request: Request }) {
         const intent: string = form.get('intent')?.toString() || ''
 
         if (intent === 'create-contact') {
-            const email: string = form.get('email')?.toString() || ''            
-            const res = await addContact(token, email)
-            console.log(res)
+            const email: string = form.get('email')?.toString() || ''
+            await addContact(token, email)
         }
 
         else if (intent === 'create-group') {
             const name = form.get('name')?.toString() || ''
             const description = form.get('description')?.toString() || ''
-            const members = form.getAll('members')|| []
+            const members = form.getAll('members') || []
             await addGroup(token, name, description, members);
         }
 
-        return null
+        return { message: "Action Completed", success: true }
     } catch (error: any) {
-        return error.message
+        return { message: error.message, success: false }
     }
 
 }
@@ -67,7 +70,7 @@ export default function ChatLayout() {
     useEffect(() => {
 
         if (userId) {
-            socket.emit('register-user', userId);            
+            socket.emit('register-user', userId);
         }
 
         const handleMessage = (data: SocketMessage) => {

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BiSolidError } from "react-icons/bi";
-import { useNavigation, Navigation, Form } from "react-router-dom";
+import { useNavigation, Navigation, Form, useActionData } from "react-router-dom";
 import CustomCard from "./CustomCard";
 import { Input } from "./ui/input";
 import {
@@ -16,9 +16,18 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 
 
-export default function AddContact({ error }: { error: string }) {
+export default function AddContact({ error }: { error:  {message:string, success:boolean} }) {
     const status: Navigation = useNavigation()
     const [open, setOpen] = useState<boolean>(false)
+    const actionData: any = useActionData()
+
+    useEffect(() => {
+        if (status.state === "submitting" && actionData) {
+            if (actionData.success) {
+                setOpen(false)
+            }
+        }
+    }, [status.state, actionData])
 
     return (
         <Dialog open={open} onOpenChange={(open) => setOpen(open)}> 
@@ -42,10 +51,10 @@ export default function AddContact({ error }: { error: string }) {
                             </Label>
                             <Input name="email" className="col-span-3" />
                         </div>
-                        {error && (
+                        {error && !error.success && (
                             <div className="flex gap-4 p-2.5 bg-red-200 rounded-md">
                                 <BiSolidError className="h-5 w-5 text-red-600" />
-                                <p className="text-sm leading-5 text-red-600">{error}</p>
+                                <p className="text-sm leading-5 text-red-600">{error.message}</p>
                             </div>
                         )}
                     </div>

@@ -11,7 +11,7 @@ export const options: {
       img: "\\chat.svg",
       title: "Chats & Calls",
       color: "bg-orange-200",
-      desc: "Connect with your team in real-time with chats and calls",
+      desc: "Connect with your team in real-time with chats and calls(Coming Soon...)",
     },
     {
       id: 2,

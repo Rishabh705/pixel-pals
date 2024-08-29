@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import SentMsg from "./SentMsg";
 import RecievedMsg from "./RecievedMsg";
 import { useAppSelector, useAppDispatch } from "@/rtk/hooks";
-import { Await, Form, useSearchParams, Link } from "react-router-dom";
+import { Await, Form, useSearchParams, Link, useActionData } from "react-router-dom";
 import { DetailedIndividualChat, DetailedGroupChat, Message, SocketMessage } from "@/utils/types";
 import { socket } from "@/lib/socket";
 import { clear } from "@/rtk/slices/socketMsgSlice";
@@ -22,6 +22,13 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const name: string = searchParams.get('name') || 'Title';
+  const actionData:any = useActionData();
+
+  useEffect(() => {
+    if (actionData?.success) {
+      setText('');
+    }
+  }, [actionData]);
 
   useEffect(() => {
     socket.on('typing', (data: { chat_id: string, sender: string }) => {
@@ -43,6 +50,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
     };
   }, [chatId, currentUser]);
 
+
   useEffect(() => {
     const scrollToBottom = () => {
       messageContainerRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,10 +60,13 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
     scrollToBottom();
 
     socket.on('receive-message', scrollToBottom);
+    socket.on('send-message', scrollToBottom);
+
 
     // Cleanup on unmount
     return () => {
       socket.off('receive-message', scrollToBottom);
+      socket.off('send-message', scrollToBottom);
     };
   }, [chatId, dispatch]);
 
@@ -94,7 +105,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
           <RecievedMsg text={message.message} time={message.created_at} participant={message.sender?.username} />
         )}
       </div>
-    ))||[];
+    )) || [];
 
     return (
       <>
@@ -125,7 +136,7 @@ export default function RenderChat({ results, method, chatId }: { results?: any,
           </div>
         </section>
         <Link to={`/board?chat_id=${chatId}`} className=" hover:bg-secondary rounded-full p-3 hover:cursor-pointer">
-          <img src='/board.svg' className="h-6"/>
+          <img src='/board.svg' className="h-6" />
         </Link>
       </div>
 

@@ -32,8 +32,8 @@ export async function action({ request, params }: { request: Request, params: an
     const chatId: string = params.id
 
     const url = new URL(request.url);
-    const receiverName: string =  url.searchParams.get("name") || '';
-    const receiverId: string =  url.searchParams.get("re") || '';
+    const receiverName: string = url.searchParams.get("name") || '';
+    const receiverId: string = url.searchParams.get("re") || '';
 
 
     if (!token || !username || !id) throw new Error('Unauthorized')
@@ -63,10 +63,10 @@ export async function action({ request, params }: { request: Request, params: an
 
     await sendMessage(message, token, messageId, chatId)
 
-    return null
+    return { message: "Message Sent.", success: true }
 
   } catch (error: any) {
-    return error.message
+    return {message: error.message, success: false}
   }
 
 }
