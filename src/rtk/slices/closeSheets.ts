@@ -9,7 +9,7 @@ const closeSheetsSlice: Slice<boolean> = createSlice({
     initialState,
     reducers: {
         // Action to set the state
-        setCloseSheets: (state, action: PayloadAction<boolean>) => {
+        setCloseSheets: (_, action: PayloadAction<boolean>) => {
             return action.payload;
         }
     }
