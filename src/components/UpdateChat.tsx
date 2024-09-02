@@ -9,7 +9,7 @@ import { socket } from "@/lib/socket"
 import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
 import RenderChat from "./RenderChat";
 import Emoji from "./Emoji";
-import { LuPaperclip, LuMic } from "react-icons/lu";
+import { LuSendHorizonal } from "react-icons/lu";
 import { Input } from "./ui/input";
 import { useAppSelector } from '@/rtk/hooks';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -161,13 +161,13 @@ export default function UpdateChat() {
 
       <Form className="flex gap-2 justify-start py-5 px-4 md:px-6 lg:px-8 items-center relative" method='PUT'>
         <Emoji setText={setText} />
-        <span className="p-2 bg-secondary rounded-full">
+        {/* <span className="p-2 bg-secondary rounded-full">
           <LuPaperclip size={20} />
-        </span>
+        </span> */}
         <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={handleChange} />
-        <span className="p-2 bg-primary rounded-full">
-          <LuMic size={20} color="aliceblue" />
-        </span>
+        <button className="p-2 bg-primary rounded-full" type='submit'>
+          <LuSendHorizonal size={20} color="aliceblue"/>
+        </button>
       </Form>
 
     </div>
