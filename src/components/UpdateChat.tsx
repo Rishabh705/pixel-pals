@@ -1,15 +1,22 @@
+import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { getChat, sendMessage } from "@/lib/api";
-import { defer, useLoaderData, useParams } from "react-router-dom";
+import { defer, useActionData, useLoaderData, useParams, Form, Link, useSearchParams } from "react-router-dom";
 import { store } from "@/rtk/store";
 import { SocketMessage } from "@/utils/types";
 import { requireAuth } from "@/lib/requireAuth";
 import { socket } from "@/lib/socket"
 import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
 import RenderChat from "./RenderChat";
+import Emoji from "./Emoji";
+import { LuPaperclip, LuMic } from "react-icons/lu";
+import { Input } from "./ui/input";
+import { useAppSelector } from '@/rtk/hooks';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 export async function loader({ params, request }: { params: any, request: Request }) {
+  // console.log('update chat loader');
   await requireAuth(request)
   const token: (string | null) = store.getState().auth.accessToken
   if (!token) return { data: [] }
@@ -22,6 +29,8 @@ export async function loader({ params, request }: { params: any, request: Reques
 
 export async function action({ request, params }: { request: Request, params: any }) {
   try {
+    // console.log("update chat action");
+    
     const form: FormData = await request.formData()
     const message: string = form.get('message')?.toString() || ''
     const token: (string | null) = store.getState().auth.accessToken
@@ -66,20 +75,102 @@ export async function action({ request, params }: { request: Request, params: an
     return { message: "Message Sent.", success: true }
 
   } catch (error: any) {
-    return {message: error.message, success: false}
+    return { message: error.message, success: false }
   }
 
 }
 
 export default function UpdateChat() {
   const results: any = useLoaderData()
+  const currentUser: string | null = useAppSelector((state) => state.auth.userId);
+  const [text, setText] = React.useState<string>('');
+  const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const actionData: any = useActionData();
+  const [searchParams] = useSearchParams();
+  const [isTyping, setIsTyping] = React.useState<boolean>(false);
+  const name: string = searchParams.get('name') || 'Title';
+
   const { id } = useParams()
 
   if (!id) throw new Error('Chat not found')
 
-  return (
+  React.useEffect(() => {
+    if (actionData?.success) {
+      setText('');
+    }
+  }, [actionData]);
 
-    <RenderChat results={results.data} method='put' chatId={id} />
+  React.useEffect(() => {
+    socket.on('typing', (data: { chat_id: string, sender: string }) => {
+      if (data.chat_id === id && data.sender !== currentUser) {
+        setIsTyping(true);
+      }
+    });
+
+    socket.on('stop-typing', (data: { chat_id: string, sender: string }) => {
+      if (data.chat_id === id && data.sender !== currentUser) {
+        setIsTyping(false);
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off('typing');
+      socket.off('stop-typing');
+    };
+  }, [id, currentUser]);
+
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    socket.emit('typing', { sender: currentUser, chat_id: id });
+
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('stop-typing', { sender: currentUser, chat_id: id });
+    }, 3000);
+  };
+
+
+  return (
+    <div className='flex flex-col w-screen h-screen'>
+
+      <div className="flex justify-between items-center px-4 md:px-6 lg:px-8">
+        <section className="flex gap-4 justify-start py-5 px-4 pl-10 lg:pl-0 items-center">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-lg font-semibold text-card-foreground">{name}</h1>
+            <p className="text-xs font-medium text-card-foreground flex items-center h-4">
+              {isTyping ? "typing..." : ""}
+            </p>
+          </div>
+        </section>
+        <Link to={`/board?chat_id=${id}`} className="hover:bg-secondary rounded-full p-3 hover:cursor-pointer">
+          <img src='/board.svg' className="h-6" />
+        </Link>
+      </div>
+
+
+      <RenderChat results={results.data} chatId={id} />
+
+      <Form className="flex gap-2 justify-start py-5 px-4 md:px-6 lg:px-8 items-center relative" method='PUT'>
+        <Emoji setText={setText} />
+        <span className="p-2 bg-secondary rounded-full">
+          <LuPaperclip size={20} />
+        </span>
+        <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={handleChange} />
+        <span className="p-2 bg-primary rounded-full">
+          <LuMic size={20} color="aliceblue" />
+        </span>
+      </Form>
+
+    </div>
   )
 }
 
