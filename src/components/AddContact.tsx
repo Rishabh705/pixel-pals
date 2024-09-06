@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BiSolidError } from "react-icons/bi";
-import { useNavigation, Navigation, Form } from "react-router-dom";
+import { useNavigation, Navigation, Form, useActionData } from "react-router-dom";
 import CustomCard from "./CustomCard";
 import { Input } from "./ui/input";
 import {
@@ -16,12 +16,21 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 
 
-export default function AddContact({ error }: { error: string }) {
+export default function AddContact({ error }: { error: { message: string, success: boolean, contact?: boolean, group?:boolean } }) {
     const status: Navigation = useNavigation()
     const [open, setOpen] = useState<boolean>(false)
+    const actionData: any = useActionData()
+
+    useEffect(() => {
+        // console.log("action data for add contacts: ", actionData);
+        if (actionData?.success) {
+            setOpen(false)
+        }
+
+    }, [actionData])
 
     return (
-        <Dialog open={open} onOpenChange={(open) => setOpen(open)}> 
+        <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
             <DialogTrigger asChild>
                 <div className="py-4 px-4 bg-secondary flex items-center gap-4 rounded-xl hover:bg-background hover:cursor-pointer w-full">
                     <CustomCard avatarImg="https://github.com/shadcn.png" avatarFallback="CN" title="Add new contact" />
@@ -40,12 +49,12 @@ export default function AddContact({ error }: { error: string }) {
                             <Label htmlFor="email" className="text-right">
                                 Email
                             </Label>
-                            <Input name="email" className="col-span-3" />
+                            <Input name="email" className="col-span-3" required/>
                         </div>
-                        {error && (
+                        {error && !error.success && error.contact && (
                             <div className="flex gap-4 p-2.5 bg-red-200 rounded-md">
                                 <BiSolidError className="h-5 w-5 text-red-600" />
-                                <p className="text-sm leading-5 text-red-600">{error}</p>
+                                <p className="text-sm leading-5 text-red-600">{error.message}</p>
                             </div>
                         )}
                     </div>

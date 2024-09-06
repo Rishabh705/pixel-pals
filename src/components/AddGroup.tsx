@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { BiSolidError } from "react-icons/bi";
-import { useNavigation, Await, Navigation, Form } from "react-router-dom";
+import { useNavigation, Await, Navigation, Form, useActionData } from "react-router-dom";
 import { User } from "@/utils/types";
 import CustomCard from "./CustomCard";
 import { Separator } from "./ui/separator";
@@ -19,10 +19,20 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 
 
-export function AddGroup({ error, contacts }: { error: string, contacts: any }) {
+export function AddGroup({ error, contacts }: { error: {message:string, success:boolean, contact?: boolean, group?:boolean}, contacts: any }) {
     const [searchText, setSearchText] = React.useState<string>("");
+    const [open, setOpen] = React.useState<boolean>(false)
     const [members, setMembers] = React.useState<string[]>([]);
     const status: Navigation = useNavigation();
+    const actionData: any = useActionData()
+
+    React.useEffect(() => {
+        // console.log("action data for add group: ", actionData);
+        if (actionData?.success) {
+            setOpen(false)
+        }
+
+    }, [actionData])
 
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,7 +80,7 @@ export function AddGroup({ error, contacts }: { error: string, contacts: any }) 
     };
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
             <DialogTrigger asChild>
                 <div className="py-4 px-4 bg-secondary flex items-center gap-4 rounded-xl hover:bg-background hover:cursor-pointer w-full">
                     <CustomCard avatarImg="https://github.com/shadcn.png" avatarFallback="CN" title="New Group" subtitle="Create a new group chat" />
@@ -120,10 +130,10 @@ export function AddGroup({ error, contacts }: { error: string, contacts: any }) 
                             </Suspense>
                         </section>
 
-                        {error && (
+                        {error && !error.success && error.group && (
                             <div className="flex gap-4 p-2.5 bg-red-200 rounded-md">
                                 <BiSolidError className="h-5 w-5 text-red-600" />
-                                <p className="text-sm leading-5 text-red-600">{error}</p>
+                                <p className="text-sm leading-5 text-red-600">{error.message}</p>
                             </div>
                         )}
                     </div>
