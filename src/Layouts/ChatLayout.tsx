@@ -51,6 +51,7 @@ export async function action({ request }: { request: Request }) {
         if (intent === 'create-group') {
             const name = form.get('name')?.toString() || ''
             const description = form.get('description')?.toString() || ''
+
             const members = form.getAll('members') || []
             await addGroup(token, name, description, members);
         }
