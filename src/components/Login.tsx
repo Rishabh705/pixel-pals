@@ -66,7 +66,7 @@ export default function Login() {
                     name="email"
                     type="text"
                     placeholder="Email"
-
+                    defaultValue='guest1@gmail.com'
                     required
                     className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
                 />
@@ -74,6 +74,7 @@ export default function Login() {
                     name="password"
                     type="password"
                     placeholder="Password"
+                    defaultValue='guest1'
                     required
                     className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
                 />
