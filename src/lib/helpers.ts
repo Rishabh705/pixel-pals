@@ -1,8 +1,8 @@
-import { login } from "@/rtk/slices/authSlice";
+import { jwtDecode } from "jwt-decode";
+const url = import.meta.env.VITE_SERVER
 import { store } from "@/rtk/store";
 import { AuthState, JWTPayload } from "@/utils/types";
-import { jwtDecode } from "jwt-decode";
-
+import { login } from "@/rtk/slices/authSlice";
 
 
 // Generate a random AES key
@@ -63,64 +63,82 @@ export async function decryptMessage(encryptedMessage: string, ivHex: string, ke
     return decoder.decode(decryptedBuffer);
 }
 
-// Helper function to refresh access token
-export async function refreshAccessToken(url: string): Promise<string | null> {
+
+// Helper function to decode JWT and check for token expiration
+export function isTokenExpired(token: string): boolean {
     try {
-        const res: Response = await fetch(`${url}/refresh`, {
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
+        const decodedToken: { exp: number } = jwtDecode(token);
 
-        if (!res.ok) {
-            throw new Error('Failed to refresh token');
-        }
-
-        const data: { accessToken: string } = await res.json();
-        const newAccessToken: string = data.accessToken;
-
-        //decode the token
-        const decoded: JWTPayload = jwtDecode(newAccessToken)
-
-        const authData: AuthState = {
-            userId: decoded.UserInfo._id,
-            email: decoded.UserInfo.email,
-            username: decoded.UserInfo.username,
-            accessToken: newAccessToken,
-        }
-
-        //store the data in the store
-        store.dispatch(login(authData))
-        localStorage.setItem("loggedin", JSON.stringify(authData))
-
-        return newAccessToken;
-    } catch (error) {
-        // console.error('Error refreshing access token:', error);
-        return null;
+        // Convert expiration time from seconds to milliseconds and compare with the current time
+        const currentTime = Date.now() / 1000; // Current time in seconds
+        return decodedToken.exp < currentTime;
+    } catch (e) {
+        console.error("Error decoding token:", e);
+        return true; // If decoding fails, consider the token expired
     }
 }
 
-// Wrapper function to handle token refreshing
-export async function fetchWithAuth(url: string, endpoint: string, options: RequestInit): Promise<Response> {
-    options.credentials = 'include';
+// Helper function to get cookie value
+export const refreshToken = async (pathname: string) => {
+    try {
+        const response = await fetch(`${url}/refresh`, {
+            method: 'GET',
+            credentials: 'include',  // Include cookies with the request
+        });
 
-    let res: Response = await fetch(`${url}${endpoint}`, options);
+        if (!response.ok) {
+            throw new Error('Session expired. Please log in again.');  // Throw an error if the refresh request fails
+        }
 
-    if (res.status === 403) { // Token might have expired
-        const newAccessToken = await refreshAccessToken(url);
+        const { accessToken } = await response.json();
+        return accessToken;  // Use the new access token
+    } catch (error:any) {
+        console.error('Failed to refresh token:', error);
+        window.location.href = `/login?message=${error.message}&redirectTo=${pathname}`;
+    }
+};
+
+export async function AuthenticatedFetch(endpoint: string, options: RequestInit, token:string): Promise<any> {
+    // Retrieve the current access token from Redux store
+    let accessToken:string = token;
+
+    // Check if the token is expired
+    if (accessToken && isTokenExpired(accessToken)) {
+        // Refresh the token if it's expired
+        const newAccessToken: string | null = await refreshToken(window.location.pathname);
         if (newAccessToken) {
-            // Retry with the new access token
-            options.headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${newAccessToken}`,
+            // Decode the new access token
+            const decoded: JWTPayload = jwtDecode(newAccessToken);
+
+            // Update the auth data with the new token
+            const updatedAuthData: AuthState = {
+                userId: decoded.UserInfo._id,
+                email: decoded.UserInfo.email,
+                username: decoded.UserInfo.username,
+                accessToken: newAccessToken,
             };
-            res = await fetch(`${url}${endpoint}`, options);
+
+            // Update Redux store and local storage with the new access token
+            store.dispatch(login(updatedAuthData));
+            localStorage.setItem("loggedin", JSON.stringify(updatedAuthData));
+
+            // Set the updated access token
+            accessToken = newAccessToken;
         } else {
-            // Handle refresh failure (e.g., log out the user)
-            // console.error('Failed to refresh token. Redirecting to login.');
-            localStorage.removeItem("loggedin")
-            window.location.href = '/login?message=Session expired. Please log in again.';
+            // If token refresh failed, redirect to login
+            window.location.href = `/login?message=Session Expired. Please Login again&redirectTo=${window.location.pathname}`;
+            return;
         }
     }
 
-    return res;
+    // Add Authorization header with the current or updated access token
+    const headers = {
+        ...options.headers,
+        Authorization: `Bearer ${accessToken}`,
+    };
+
+    // Make the fetch request with the updated headers
+    const response = await fetch(endpoint, { ...options, headers });
+
+    return response;
 }

@@ -30,7 +30,7 @@ export async function loader({ params, request }: { params: any, request: Reques
 export async function action({ request, params }: { request: Request, params: any }) {
   try {
     // console.log("update chat action");
-    
+
     const form: FormData = await request.formData()
     const message: string = form.get('message')?.toString() || ''
     const token: (string | null) = store.getState().auth.accessToken
@@ -89,6 +89,8 @@ export default function UpdateChat() {
   const [searchParams] = useSearchParams();
   const [isTyping, setIsTyping] = React.useState<boolean>(false);
   const name: string = searchParams.get('name') || 'Title';
+  const [isOpen, setIsOpen] = React.useState(false);
+
 
   const { id } = useParams()
 
@@ -134,6 +136,11 @@ export default function UpdateChat() {
     }, 3000);
   };
 
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setIsOpen(false);
+  }
+
 
   return (
     <div className='flex flex-col w-screen h-screen'>
@@ -156,17 +163,13 @@ export default function UpdateChat() {
         </Link>
       </div>
 
-
       <RenderChat results={results.data} chatId={id} />
 
-      <Form className="flex gap-2 justify-start py-5 px-4 md:px-6 lg:px-8 items-center relative" method='PUT'>
-        <Emoji setText={setText} />
-        {/* <span className="p-2 bg-secondary rounded-full">
-          <LuPaperclip size={20} />
-        </span> */}
+      <Form className="flex gap-2 justify-start py-5 px-4 md:px-6 lg:px-8 items-center relative" method='PUT' onClick={(e)=>handleClick(e)}>
+        <Emoji setText={setText} isOpen={isOpen} setIsOpen={setIsOpen}/>
         <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={handleChange} />
         <button className="p-2 bg-primary rounded-full" type='submit'>
-          <LuSendHorizonal size={20} color="aliceblue"/>
+          <LuSendHorizonal size={20} color="aliceblue" />
         </button>
       </Form>
 

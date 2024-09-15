@@ -77,9 +77,7 @@ export default function ChatLayout() {
         if (userId) {
             socket.emit('register-user', userId);
         }
-
-        console.log(userId);
-        
+       
 
         const handleMessage = (data: SocketMessage) => {
             dispatch(setSocketMsg(data));

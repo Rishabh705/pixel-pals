@@ -1,4 +1,4 @@
-import { fetchWithAuth } from './helpers'
+import { AuthenticatedFetch } from './helpers'
 
 // fetch search results
 const url = import.meta.env.VITE_SERVER
@@ -77,7 +77,7 @@ export async function getChats(userID: string, token: string): Promise<any> {
             'Authorization': `Bearer ${token}`
         }
     }
-    const res: Response = await fetchWithAuth(url, `/api/chats?userID=${userID}`, options)
+    const res: Response = await AuthenticatedFetch(`${url}/api/chats?userID=${userID}`, options, token)
 
     const data = await res.json()
 
@@ -100,7 +100,7 @@ export async function getChat(chatID: string, token: string): Promise<any> {
         }
     }
 
-    const res: Response = await fetchWithAuth(url, `/api/chats/${chatID}`, options)
+    const res: Response = await AuthenticatedFetch(`${url}/api/chats/${chatID}`, options, token)
 
     const data = await res.json()
 
@@ -126,7 +126,7 @@ export async function createChat(token: string, receiverID: string): Promise<any
             receiverID: receiverID
         })
     }
-    const res: Response = await fetchWithAuth(url, `/api/chats/one-on-one`, options)
+    const res: Response = await AuthenticatedFetch(`${url}/api/chats/one-on-one`, options, token)
 
     const data = await res.json()
 
@@ -153,7 +153,7 @@ export async function addContact(token: string, email: string): Promise<any> {
             email: email
         })
     }
-    const res: Response = await fetchWithAuth(url, `/api/contacts`, options)
+    const res: Response = await AuthenticatedFetch(`${url}/api/contacts`, options, token)
 
     const data = await res.json()
 
@@ -175,7 +175,7 @@ export async function getContacts(userID: string, token: string): Promise<any> {
             'Authorization': `Bearer ${token}`
         },
     }
-    const res: Response = await fetchWithAuth(url, `/api/contacts?userId=${userID}`, options)
+    const res: Response = await AuthenticatedFetch(`${url}/api/contacts?userId=${userID}`, options, token)
 
     const data = await res.json()
 
@@ -210,7 +210,7 @@ export async function sendMessage(message: string, token: string, messageID: str
             messageID: messageID
         })
     }
-    const res: Response = await fetchWithAuth(url, `/api/chats/${chatID}`, options)
+    const res: Response = await AuthenticatedFetch(`${url}/api/chats/${chatID}`, options, token)
 
     const data = await res.json()
 
@@ -241,7 +241,7 @@ export async function addGroup(token: string, name: string, description: string,
             members: members
         })
     }
-    const res: Response = await fetchWithAuth(url, `/api/chats/group`, options)
+    const res: Response = await AuthenticatedFetch(`${url}/api/chats/group`, options, token)
 
     const data = await res.json()
 

@@ -17,11 +17,29 @@ export async function action({ request }: { request: Request }) {
 
     if (password1 !== password2)
       throw new Error("Passwords should match")
+    
+    const passwordSpecial = /[@#$%^&*()!+-]/;
 
-    const res = await registerUser({ username, email, password: password1 })
+    if (!passwordSpecial.test(password1))
+      throw new Error("Password should contain at least one special character.")
+    
+    const passwordLower = /[a-z]/;
 
+    if (!passwordLower.test(password1))
+      throw new Error("Password should contain at least one lowercase character.")
+    
+    const passwordUpper = /[A-Z]/;
 
-    console.log(res);
+    if (!passwordUpper.test(password1))
+      throw new Error("Password should contain at least one uppercase character.")
+    
+    const passwordDigit = /[0-9]/;
+
+    if (!passwordDigit.test(password1))
+      throw new Error("Password should contain at least one digit.")
+
+    await registerUser({ username, email, password: password1 })
+
     return redirect('/login')
 
   } catch (error: any) {
@@ -55,12 +73,14 @@ export default function Register() {
         <input
           name="password1"
           type="password"
+          minLength={8}
           placeholder="Password"
           className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
         />
         <input
           name="password2"
           type="password"
+          minLength={8}
           placeholder="Password again"
           className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
         />

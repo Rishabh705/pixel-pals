@@ -40,7 +40,10 @@ export default function RenderChat({ results, chatId }: { results?: any, chatId:
     }
 
     const filteredChatMessages: Message[] = data?.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
-    const filteredSocketMessages: SocketMessage[] = socketMessagesMap.size > 0 ? [...socketMessagesMap.values()] : [];
+    const filteredSocketMessages: SocketMessage[] = socketMessagesMap.size > 0
+      ? [...socketMessagesMap.values()].filter((msg) => msg.chat_id === chatId)
+      : [];
+
     const allMessages: (Message | SocketMessage)[] = [...filteredChatMessages, ...filteredSocketMessages].sort((a, b) => {
       const d1: Date = new Date(a.created_at);
       const d2: Date = new Date(b.created_at);

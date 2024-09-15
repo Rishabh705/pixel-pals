@@ -1,4 +1,4 @@
-import { Link, Form, useLoaderData, useActionData, useNavigation, Navigation , redirect } from "react-router-dom"
+import { Link, Form, useLoaderData, useActionData, useNavigation, Navigation, redirect } from "react-router-dom"
 import { loginUser } from "../lib/api"
 import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
@@ -8,7 +8,7 @@ import { AuthState, JWTPayload } from "@/utils/types";
 import { login } from "@/rtk/slices/authSlice";
 import { jwtDecode } from "jwt-decode";
 import { store } from "@/rtk/store";
-
+import { useAuth0 } from "@auth0/auth0-react";
 
 export async function loader({ request }: { request: Request }) {
     const url: URL = new URL(request.url)
@@ -26,26 +26,26 @@ export async function action({ request }: { request: Request }) {
         const password: (FormDataEntryValue | null) = form.get('password')
 
         const res = await loginUser({ email, password })
-        
+
         //decode the token
         const decoded: JWTPayload = jwtDecode(res.accessToken)
 
         const authData: AuthState = {
-            userId : decoded.UserInfo._id,
-            email : decoded.UserInfo.email,
-            username : decoded.UserInfo.username,
+            userId: decoded.UserInfo._id,
+            email: decoded.UserInfo.email,
+            username: decoded.UserInfo.username,
             accessToken: res.accessToken,
         }
-            
+
 
         //store the data in the store
         store.dispatch(login(authData))
-        
+
         localStorage.setItem("loggedin", JSON.stringify(authData))
 
         return redirect(pathname)
 
-    } catch (error:any) {
+    } catch (error: any) {
         return error.message
     }
 
@@ -53,9 +53,10 @@ export async function action({ request }: { request: Request }) {
 
 export default function Login() {
 
-    const message:any = useLoaderData()
-    const error:any = useActionData()
-    const status:Navigation = useNavigation()
+    const message: any = useLoaderData()
+    const error: any = useActionData()
+    const status: Navigation = useNavigation()
+    const { loginWithRedirect } = useAuth0();
 
     return (
         <div className="flex flex-col items-center pt-16 pb-20 gap-8 px-7">
@@ -99,18 +100,18 @@ export default function Login() {
                 <section className="text-sm text-center pt-5 pb-2.5">
                     <span>Or Signin Using</span>
                 </section>
-                <section className="flex gap-5 justify-center">
-                    <Link to="#" className="bg1">
-                        <FcGoogle size={25} />
-                    </Link>
-                    <Link to="#" className="bg2">
-                        <FaGithub size={25} />
-                    </Link>
-                    <Link to="#" className="bg3">
-                        <FaFacebook color="#2486fd" size={25} />
-                    </Link>
-                </section>
             </Form>
+            <section className="flex gap-5 justify-center">
+                <button className="bg1" onClick={() => loginWithRedirect()}>
+                    <FcGoogle size={25} />
+                </button>
+                <button className="bg2">
+                    <FaGithub size={25} />
+                </button>
+                <button className="bg3">
+                    <FaFacebook color="#2486fd" size={25} />
+                </button>
+            </section>
             <Link to='/register' className="text-sm text-muted-foreground hover:underline">No account? Create one here.</Link>
         </div>
     )
