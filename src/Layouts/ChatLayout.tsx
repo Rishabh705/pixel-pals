@@ -25,6 +25,9 @@ export async function loader({ request }: { request: Request }) {
     const data = getChats(userId, token)
     const contacts = getContacts(userId, token)
 
+    if (userId) {
+        socket.emit('register-user', userId);
+    }
 
     return defer({ data: data, contacts: contacts })
 
@@ -69,15 +72,9 @@ export default function ChatLayout() {
     const data: any = useLoaderData()
     const error: any = useActionData()
     const dispatch = useAppDispatch()
-    const userId:string|null = useAppSelector((state) => state.auth.userId)
-    const closeSheets:boolean = useAppSelector((state)=>state.closeSheets)
+    const closeSheets: boolean = useAppSelector((state) => state.closeSheets)
 
     useEffect(() => {
-
-        if (userId) {
-            socket.emit('register-user', userId);
-        }
-       
 
         const handleMessage = (data: SocketMessage) => {
             dispatch(setSocketMsg(data));
@@ -97,7 +94,7 @@ export default function ChatLayout() {
 
     return (
         <div className="flex h-screen border-b-2">
-            <Sheet open={closeSheets} onOpenChange={(open)=>dispatch(setCloseSheets(open))}>
+            <Sheet open={closeSheets} onOpenChange={(open) => dispatch(setCloseSheets(open))}>
                 <SheetTrigger className='flex lg:hidden absolute left-3 top-6'>
                     <GiHamburgerMenu color='#1a1a1a' size={30} />
                 </SheetTrigger>

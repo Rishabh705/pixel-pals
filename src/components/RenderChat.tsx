@@ -34,14 +34,18 @@ export default function RenderChat({ results, chatId }: { results?: any, chatId:
   }, [chatId, dispatch]);
 
   const renderChats = ({ data }: { data: DetailedIndividualChat | DetailedGroupChat }) => {
-    const socketMessagesMap = new Map<string, SocketMessage>();
+    const socketMessagesMap: Map<string, SocketMessage> = new Map<string, SocketMessage>();
     for (const msg of socketMessages) {
       socketMessagesMap.set(msg._id, msg);
     }
 
-    const filteredChatMessages: Message[] = data?.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id));
+    const filteredChatMessages: Message[] = data?.messages.filter((msg) => msg._id && !socketMessagesMap.has(msg._id)).map((msg) => {
+      return msg
+    });
     const filteredSocketMessages: SocketMessage[] = socketMessagesMap.size > 0
-      ? [...socketMessagesMap.values()].filter((msg) => msg.chat_id === chatId)
+      ? [...socketMessagesMap.values()].filter((msg) => msg.chat_id === chatId).map(msg => {    // ensure that only messages from the current chat are displayed 
+        return msg
+      })
       : [];
 
     const allMessages: (Message | SocketMessage)[] = [...filteredChatMessages, ...filteredSocketMessages].sort((a, b) => {
@@ -53,9 +57,10 @@ export default function RenderChat({ results, chatId }: { results?: any, chatId:
     const messages: JSX.Element[] = allMessages?.map((message) => (
       <div key={message._id} className={`flex gap-4 ${currentUser === message.sender?._id ? 'justify-end' : 'justify-start'}`}>
         {currentUser === message.sender?._id ? (
-          <SentMsg text={message.message} time={message.created_at} participant={message.sender?.username} />
+          <SentMsg cipher={message.message} time={message.created_at} />
         ) : (
-          <RecievedMsg text={message.message} time={message.created_at} participant={message.sender?.username} />
+          // <></>
+          <RecievedMsg cipher={message.message} time={message.created_at} participant={message.sender?.username} />
         )}
       </div>
     )) || [];
@@ -66,7 +71,7 @@ export default function RenderChat({ results, chatId }: { results?: any, chatId:
           messages
         ) : (
           <div className="flex flex-col gap-2 justify-center items-center h-96">
-            <p className="text-muted-foreground">No messages yet</p>
+            <p className="text-muted-foreground text-lg">Send the First Message</p>
           </div>
         )}
       </>

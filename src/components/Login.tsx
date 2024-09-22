@@ -9,6 +9,9 @@ import { login } from "@/rtk/slices/authSlice";
 import { jwtDecode } from "jwt-decode";
 import { store } from "@/rtk/store";
 import { useAuth0 } from "@auth0/auth0-react";
+import { socket } from "@/lib/socket";
+import { storeKey } from "@/lib/helpers";
+
 
 export async function loader({ request }: { request: Request }) {
     const url: URL = new URL(request.url)
@@ -26,7 +29,6 @@ export async function action({ request }: { request: Request }) {
         const password: (FormDataEntryValue | null) = form.get('password')
 
         const res = await loginUser({ email, password })
-
         //decode the token
         const decoded: JWTPayload = jwtDecode(res.accessToken)
 
@@ -42,6 +44,16 @@ export async function action({ request }: { request: Request }) {
         store.dispatch(login(authData))
 
         localStorage.setItem("loggedin", JSON.stringify(authData))
+
+        // get public key from DB
+        const base64publicKey: string = res.data1; // NOT encrypted
+        const encryptedBase64PrivateKey: string = res.data2; // encrypted
+
+        // share public key with server
+        socket.emit('share-public-key', { publicKey: base64publicKey });
+
+        // Store private key in IndexedDB as data2
+        await storeKey(encryptedBase64PrivateKey, 'data2');
 
         return redirect(pathname)
 
@@ -97,7 +109,10 @@ export default function Login() {
                         <p className="text-sm leading-5 text-red-600">{error}</p>
                     </section>
                 )}
-                <section className="text-sm text-center pt-5 pb-2.5">
+                <section className="py-2 px-3 rounded-full bg-gradient-to-r from-blue-300 to-blue-800">
+                    <em className="text-sm text-center text-white">Deployed on Free Tier, so increased response time may be experienced</em>
+                </section>
+                <section className="text-xs text-center p-2">
                     <span>Or Signin Using</span>
                 </section>
             </Form>

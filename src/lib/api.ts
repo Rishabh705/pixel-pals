@@ -1,4 +1,4 @@
-import { AuthenticatedFetch } from './helpers'
+import { AuthenticatedFetch, encryptKey, uint8ArrayToBase64 } from './helpers'
 
 // fetch search results
 const url = import.meta.env.VITE_SERVER
@@ -28,15 +28,34 @@ export async function loginUser(formdata: { email: (FormDataEntryValue | null), 
     return data
 }
 
+export async function registerUser(
+    formdata: {
+        username: string,
+        email: string,
+        password: string,
+        publicKey: CryptoKey,
+        privateKey: CryptoKey,
+    }
+): Promise<any> {
 
-export async function registerUser(formdata: { username: string, email: string, password: string }): Promise<any> {
+    const encryptedPrivateKey64:string = await encryptKey(formdata.privateKey); //WORKING
+    const exportedPublicKey:ArrayBuffer = await crypto.subtle.exportKey('spki', formdata.publicKey);
+
+    const publicKeyArrayBuffer:Uint8Array = new Uint8Array(exportedPublicKey);
+    
+    // Convert ArrayBuffer to base64 for JSON serialization
+    const publicKeyBase64:string = uint8ArrayToBase64(publicKeyArrayBuffer);
 
     const res: Response = await fetch(`${url}/api/auth/register/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formdata)
+        body: JSON.stringify({
+            ...formdata,
+            data1: publicKeyBase64,  // don't encrypted public key
+            data2: encryptedPrivateKey64  // Encrypted private key
+        })
     })
 
     const data = await res.json()
