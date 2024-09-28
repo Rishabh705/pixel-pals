@@ -49,7 +49,7 @@ async function decryptSymmetricKey(encryptedAESKeyBase64: string): Promise<Crypt
 export async function encryptData(data: string, encryptedAESKeyBase64: string): Promise<string> {
     const symmetricKey: CryptoKey = await decryptSymmetricKey(encryptedAESKeyBase64);
 
-    const iv: Uint8Array<ArrayBuffer> = crypto.getRandomValues(new Uint8Array(12));
+    const iv: Uint8Array = crypto.getRandomValues(new Uint8Array(12));
     const encodedData = new TextEncoder().encode(data);
 
     const encryptedMessage: ArrayBuffer = await crypto.subtle.encrypt(
@@ -58,7 +58,7 @@ export async function encryptData(data: string, encryptedAESKeyBase64: string): 
         encodedData
     );
 
-    const combined: Uint8Array<ArrayBuffer> = new Uint8Array([...iv, ...new Uint8Array(encryptedMessage)]);
+    const combined: Uint8Array = new Uint8Array([...iv, ...new Uint8Array(encryptedMessage)]);
     return uint8ArrayToBase64(combined);
 }
 

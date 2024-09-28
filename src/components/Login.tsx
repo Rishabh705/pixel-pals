@@ -82,7 +82,7 @@ export default function Login() {
                     name="password"
                     type="password"
                     placeholder="Password"
-                    defaultValue='guest1'
+                    defaultValue='Guest1@123'
                     required
                     className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
                 />
