@@ -1,11 +1,5 @@
 // Generate RSA key pair
 export async function generateKeyPair(): Promise<CryptoKeyPair> {
-
-    if (!window.crypto || !window.crypto.subtle) {
-        console.error("Crypto API is not available in the Netlify environment.");
-    } else {
-        console.log("Crypto API available");
-    }
     return await crypto.subtle.generateKey(
         {
             name: "RSA-OAEP",
