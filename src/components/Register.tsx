@@ -41,7 +41,6 @@ export async function action({ request }: { request: Request }) {
 
     // generate keypair after successful login
     const {publicKey, privateKey}: CryptoKeyPair = await generateKeyPair();
-    console.log("private ",privateKey);
 
     await registerUser({ username, email, password: password1, publicKey, privateKey }) // not encrypting private key right now.
 

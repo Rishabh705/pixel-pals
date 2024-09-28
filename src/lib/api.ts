@@ -1,4 +1,5 @@
-import { AuthenticatedFetch, encryptKey, uint8ArrayToBase64 } from './helpers'
+import { encryptKey, uint8ArrayToBase64 } from './helpers';
+import { AuthenticatedFetch } from './jwt';
 
 // fetch search results
 const url = import.meta.env.VITE_SERVER
@@ -38,13 +39,13 @@ export async function registerUser(
     }
 ): Promise<any> {
 
-    const encryptedPrivateKey64:string = await encryptKey(formdata.privateKey); //WORKING
-    const exportedPublicKey:ArrayBuffer = await crypto.subtle.exportKey('spki', formdata.publicKey);
+    const encryptedPrivateKey64: string = await encryptKey(formdata.privateKey); //WORKING
+    const exportedPublicKey: ArrayBuffer = await crypto.subtle.exportKey('spki', formdata.publicKey);
 
-    const publicKeyArrayBuffer:Uint8Array = new Uint8Array(exportedPublicKey);
-    
+    const publicKeyArrayBuffer: Uint8Array = new Uint8Array(exportedPublicKey);
+
     // Convert ArrayBuffer to base64 for JSON serialization
-    const publicKeyBase64:string = uint8ArrayToBase64(publicKeyArrayBuffer);
+    const publicKeyBase64: string = uint8ArrayToBase64(publicKeyArrayBuffer);
 
     const res: Response = await fetch(`${url}/api/auth/register/`, {
         method: 'POST',
@@ -247,7 +248,6 @@ export async function sendMessage(message: string, token: string, messageID: str
 
 export async function addGroup(token: string, name: string, description: string, members: FormDataEntryValue[]): Promise<any> {
 
-
     const options = {
         method: 'POST',
         headers: {
@@ -257,7 +257,7 @@ export async function addGroup(token: string, name: string, description: string,
         body: JSON.stringify({
             name: name,
             description: description,
-            members: members
+            members: members,
         })
     }
     const res: Response = await AuthenticatedFetch(`${url}/api/chats/group`, options, token)

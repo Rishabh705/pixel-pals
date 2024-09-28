@@ -40,22 +40,47 @@ export async function action({ request }: { request: Request }) {
         const form: FormData = await request.formData()
         const token: (string | null) = store.getState().auth.accessToken
 
-        if (!token) throw new Error("User not authenticated.")
+        if (!token)
+            throw {
+                message: "You are not authenticated. Please login",
+                statusText: "Unauthorized",
+                status: 401,
+            };
 
 
-        const intent: string = form.get('intent')?.toString() || ''
+        const intent: string | undefined = form.get('intent')?.toString()
+
+        if (!intent)
+            throw {
+                message: "Something went wrong. Please try again",
+                statusText: "Bad Request",
+                status: 400,
+            };
 
         if (intent === 'create-contact') {
-            const email: string = form.get('email')?.toString() || ''
+            const email: string | undefined = form.get('email')?.toString()
+
+            if (!email)
+                throw new Error("Please fill in all the fields")
+
             await addContact(token, email)
             return { message: "Action Completed", success: true }
         }
 
         if (intent === 'create-group') {
-            const name = form.get('name')?.toString() || ''
-            const description = form.get('description')?.toString() || ''
+            const name: string | undefined = form.get('name')?.toString()
+            const description: string | undefined = form.get('description')?.toString()
 
-            const members = form.getAll('members') || []
+            if (!name || !description) {
+                throw new Error("Please fill in all the fields")
+            }
+
+            const members: FormDataEntryValue[] = form.getAll('members')
+
+            if (members.length === 0) {
+                throw new Error("Please add at least one member")
+            }
+            
             await addGroup(token, name, description, members);
         }
         return { message: "Action Completed", success: true }

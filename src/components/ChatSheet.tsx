@@ -86,7 +86,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
             .map((chat) => {
                 const otherParticipant: User = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
                 const lastMessage: string = chat.lastmessage?.message || "Start Conversation";
-                const side: "sender"|"receiver" = chat.lastmessage?.sender._id === userId ? "sender" : "receiver"; 
+                const isSender: boolean = chat?.lastmessage?.sender._id === userId;
 
                 return (
                     <ChatCard
@@ -97,7 +97,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         fallbackText={otherParticipant?.username || ""}
                         title={otherParticipant?.username || ""}
                         lastMessage={lastMessage}
-                        side={side}
+                        isSender={isSender}
                     />
                 );
             });
@@ -109,6 +109,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
             .filter((chat) => chat.name.toLowerCase().includes(searchText.toLowerCase()))
             .map((chat) => {
                 const lastMessage: string = chat.lastmessage?.message || "Start Conversation";
+                const isSender: boolean = chat?.lastmessage?.sender._id === userId;
 
                 return (
                     <ChatCard
@@ -119,6 +120,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         fallbackText={chat.name}
                         title={chat.name}
                         lastMessage={lastMessage}
+                        isSender={isSender}
                     />
                 );
             });

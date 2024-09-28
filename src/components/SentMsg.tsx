@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { decryptData } from "@/lib/helpers";
+import { decryptData } from "@/lib/E2EE";
+import { useAppSelector } from "@/rtk/hooks";
 
 export default function SentMsg({ cipher, time }: { cipher: string; time: string }) {
   const [text, setText] = useState<string>("");
-
+  const AESkey = useAppSelector(state=>state.key.encryptionKey);
+  
   useEffect(() => {
     const decryptMessage = async () => {
       try {
-        const decryptedText = await decryptData(cipher, "sender");
+        const decryptedText = await decryptData(cipher, AESkey);
         setText(decryptedText);
       } catch (error) {
         console.error("Decryption error:", error);
       }
     };
     decryptMessage();
-  }, [cipher]);  
+  }, [cipher, AESkey]);
+  
   function extractTime(isoString: string): string {
     const dateObj = new Date(isoString);
     const hours = dateObj.getHours().toString().padStart(2, "0");

@@ -9,7 +9,6 @@ import { login } from "@/rtk/slices/authSlice";
 import { jwtDecode } from "jwt-decode";
 import { store } from "@/rtk/store";
 import { useAuth0 } from "@auth0/auth0-react";
-import { socket } from "@/lib/socket";
 import { storeKey } from "@/lib/helpers";
 
 
@@ -46,11 +45,7 @@ export async function action({ request }: { request: Request }) {
         localStorage.setItem("loggedin", JSON.stringify(authData))
 
         // get public key from DB
-        const base64publicKey: string = res.data1; // NOT encrypted
         const encryptedBase64PrivateKey: string = res.data2; // encrypted
-
-        // share public key with server
-        socket.emit('share-public-key', { publicKey: base64publicKey });
 
         // Store private key in IndexedDB as data2
         await storeKey(encryptedBase64PrivateKey, 'data2');

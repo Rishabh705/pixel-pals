@@ -1,17 +1,20 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { decryptData } from "@/lib/helpers";
+import { decryptData } from "@/lib/E2EE";
+import { useAppSelector } from "@/rtk/hooks";
 import { useState, useEffect } from "react";
 
 export default function RecievedMsg({ cipher, participant, time }: { cipher: string; participant: string; time: string }) {
     const [text, setText] = useState<string>("");
+    const AESkey = useAppSelector(state => state.key.encryptionKey);
 
     useEffect(() => {
         const decryptMessage = async () => {
-            const decryptedText = await decryptData(cipher, "receiver");
+            const decryptedText = await decryptData(cipher, AESkey);
             setText(decryptedText);
         };
         decryptMessage();
-    }, [cipher]);
+    }, [cipher, AESkey]);
+    
     function extractTime(isoString: string): string {
         const dateObj = new Date(isoString)
         const hours = dateObj.getHours().toString().padStart(2, '0')

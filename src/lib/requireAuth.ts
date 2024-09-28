@@ -2,7 +2,7 @@ import { redirect } from "react-router-dom";
 import { store } from "@/rtk/store";
 import { AuthState, JWTPayload } from "@/utils/types";
 import { login } from "@/rtk/slices/authSlice";
-import { isTokenExpired, refreshToken } from "./helpers";
+import { isTokenExpired, refreshToken } from "./jwt";
 import {jwtDecode} from "jwt-decode"; // Fixed import of jwtDecode
 
 export async function requireAuth(request: Request) {

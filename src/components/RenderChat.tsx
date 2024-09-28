@@ -57,10 +57,9 @@ export default function RenderChat({ results, chatId }: { results?: any, chatId:
     const messages: JSX.Element[] = allMessages?.map((message) => (
       <div key={message._id} className={`flex gap-4 ${currentUser === message.sender?._id ? 'justify-end' : 'justify-start'}`}>
         {currentUser === message.sender?._id ? (
-          <SentMsg cipher={message.message} time={message.created_at} />
+          <SentMsg cipher={message.message} time={message.created_at}/>
         ) : (
-          // <></>
-          <RecievedMsg cipher={message.message} time={message.created_at} participant={message.sender?.username} />
+          <RecievedMsg cipher={message.message} time={message.created_at} participant={message.sender?.username}/>
         )}
       </div>
     )) || [];

@@ -17,7 +17,7 @@ export interface Message {
   message: string;
   sender: User;
   created_at: string;
-  chat_type: string;
+  chat_type: "individual" | "group";
 }
 
 export interface DecryptedMessage extends Omit<Message, 'message'> {
@@ -39,7 +39,7 @@ export interface BaseChat {
   chat_id: string;
   created_at: string;
   lastmessage: Message;
-  chat_type: string;
+  chat_type: "individual" | "group";
 }
 
 export interface IndividualChat extends BaseChat {

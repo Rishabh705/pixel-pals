@@ -4,7 +4,8 @@ import { Separator } from './ui/separator';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCloseSheets } from '@/rtk/slices/closeSheets';
-import { decryptData } from '@/lib/helpers';
+import { decryptData } from '@/lib/E2EE';
+import { useAppSelector } from '@/rtk/hooks';
 
 type ChatCardProps = {
     chatId: string;
@@ -13,10 +14,10 @@ type ChatCardProps = {
     fallbackText: string;
     title: string;
     lastMessage: string;
-    side: "sender" | "receiver"
+    isSender: boolean;
 };
 
-const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackText, title, lastMessage, side }) => {
+const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackText, title, lastMessage, isSender }) => {
     const navigate: NavigateFunction = useNavigate();
     const dispatch = useDispatch();
     const [subtitle, setSubtitle] = useState<string>("");
@@ -25,22 +26,21 @@ const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackTe
         dispatch(setCloseSheets(false));
         navigate(link);
     };
-
+    const AESkey = useAppSelector(state => state.key.encryptionKey);
     useEffect(() => {
         const decryptMessage = async () => {
-            const decryptedText = await decryptData(lastMessage, side);
+            const decryptedText = await decryptData(lastMessage, AESkey);
             setSubtitle(decryptedText);
         };
-        decryptMessage();
+        if (lastMessage !== "Start Conversation")
+            decryptMessage();
     }, [lastMessage]);
 
     const displaySubtitle = () => {
-        if (!lastMessage) {
+        if (lastMessage === "Start Conversation") {
             return "Start Conversation";
-        } else if (subtitle) {
-            return side === 'sender' ? `You: ${subtitle}` : `${title}: ${subtitle}`;
         }
-        return '';
+        return isSender ? `You: ${subtitle}` : `${title}: ${subtitle}`;
     };
 
     return (

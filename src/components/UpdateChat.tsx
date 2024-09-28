@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getChat, sendMessage } from "@/lib/api";
 import { defer, useActionData, useLoaderData, useParams, Form, Link, useSearchParams } from "react-router-dom";
 import { store } from "@/rtk/store";
-import { Keys, SocketMessage } from "@/utils/types";
+import { SocketMessage } from "@/utils/types";
 import { requireAuth } from "@/lib/requireAuth";
 import { socket } from "@/lib/socket"
 import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
@@ -13,14 +13,16 @@ import { LuSendHorizonal } from "react-icons/lu";
 import { Input } from "./ui/input";
 import { useAppSelector } from '@/rtk/hooks';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { encryptData } from '@/lib/helpers';
-import { setKeys } from '@/rtk/slices/keySlice';
+import { encryptData } from '@/lib/E2EE';
+import { setKey } from '@/rtk/slices/keySlice';
 
 export async function loader({ params, request }: { params: any, request: Request }) {
   // console.log('update chat loader');
   await requireAuth(request)
   const token: (string | null) = store.getState().auth.accessToken
-  if (!token) return { data: [] }
+  const userID: (string | null) = store.getState().auth.userId
+
+  if (!token || !userID) return { data: [] }
 
   const url: URL = new URL(request.url);
 
@@ -33,12 +35,20 @@ export async function loader({ params, request }: { params: any, request: Reques
       status: 400
     }
 
-  socket.emit('join-chat', params.id, type);
+  socket.emit('join-chat', params.id, userID);
 
-  // Get the public key of the receiver(s) and store in the store
-  socket.on('others-public-key', (publicKeys: Keys) => {
-    store.dispatch(setKeys(publicKeys));
+  // Get the AES key of the sender and store in the store
+  socket.on('encryptionKey', (encryptionKey: string) => {
+
+    if (encryptionKey === '') {
+      // If the encryption key is empty, throw an error
+      throw new Error('Failed to retrieve encryption key');
+    }
+
+    store.dispatch(setKey(encryptionKey));
   })
+
+
 
   const data: (Promise<any>) = getChat(params.id, token)
   return defer({ data })
@@ -65,12 +75,7 @@ export async function action({ request, params }: { request: Request, params: an
     const receiverName: string | null = url.searchParams.get("name");
     const receiverId: string | null = url.searchParams.get("re");
     const chatType: string | null = url.searchParams.get("type");
-
-    if (!receiverId || !receiverName) {
-      window.location.href = '/chats';
-      return { message: "Session Error. Failed to send the message", success: false };
-    }
-
+    
     if (!chatType || (chatType !== "individual" && chatType !== "group")) {
       throw {
         message: "Invalid chat type. Please go back and try again",
@@ -79,22 +84,25 @@ export async function action({ request, params }: { request: Request, params: an
       };
     }
 
+    if (chatType==='individual' && !receiverId || !receiverName) {
+      window.location.href = '/chats';
+      return { message: "Session Error. Failed to send the message", success: false };
+    }
+
+
     const today: Date = new Date();
     const messageId: string = uuidv4();
 
-    const receiverPublicKeyBase64: string|undefined = store.getState().keys.publicKeys[receiverId];
-    const senderPublicKeyBase64: string|undefined = store.getState().keys.publicKeys[id];
+    const encryptionKey: string | undefined = store.getState().key.encryptionKey;
 
-    if(!receiverPublicKeyBase64 || !senderPublicKeyBase64) {
+    if (!encryptionKey) {
       throw {
         message: "Something went wrong. Please go back and try again",
         statusText: "Bad Request",
         status: 400,
       };
     }
-
-    const encryptedMessage: string = await encryptData(message, receiverPublicKeyBase64, senderPublicKeyBase64);
-
+    const encryptedMessage = await encryptData(message, encryptionKey);
 
     // Create the message object in plain text form
     const data: SocketMessage = {
@@ -107,7 +115,7 @@ export async function action({ request, params }: { request: Request, params: an
         username: username,
       },
       receiver: {
-        _id: receiverId,
+        _id: receiverId || '',
         avatar: '',
         username: receiverName,
       },
@@ -116,10 +124,8 @@ export async function action({ request, params }: { request: Request, params: an
     };
 
     store.dispatch(setSocketMsg(data));
-      
-    socket.emit('send-message', data); // Emit with plain text for immediate feedback
 
-    // console.log(encryptedMessage);
+    socket.emit('send-message', data); // Emit with plain text for immediate feedback
 
     await sendMessage(encryptedMessage, token, messageId, chatId);
 

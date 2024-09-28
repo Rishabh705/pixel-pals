@@ -30,7 +30,7 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
 
   const createOneonOneChat = async (contact: User) => {
     if (!token) throw new Error("User not authenticated.");
-    const res = await createChat(token, contact._id);    
+    const res = await createChat(token, contact._id); 
     setOpen(false);
     navigate(`/chats/${res._id}?re=${contact._id}&name=${contact.username}&type=individual`);
   };
