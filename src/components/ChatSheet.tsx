@@ -87,7 +87,6 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                 const otherParticipant: User = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
                 const lastMessage: string = chat.lastmessage?.message || "Start Conversation";
                 const isSender: boolean = chat?.lastmessage?.sender._id === userId;
-
                 return (
                     <ChatCard
                         key={chat.chat_id}
@@ -98,6 +97,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         title={otherParticipant?.username || ""}
                         lastMessage={lastMessage}
                         isSender={isSender}
+                        AESkey={chat.encrypted_aes_key}                
                     />
                 );
             });
@@ -121,6 +121,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         title={chat.name}
                         lastMessage={lastMessage}
                         isSender={isSender}
+                        AESkey={chat.encrypted_aes_key}                
                     />
                 );
             });

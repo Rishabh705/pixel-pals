@@ -40,6 +40,7 @@ export interface BaseChat {
   created_at: string;
   lastmessage: Message;
   chat_type: "individual" | "group";
+  encrypted_aes_key: string;
 }
 
 export interface IndividualChat extends BaseChat {

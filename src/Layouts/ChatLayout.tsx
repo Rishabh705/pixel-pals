@@ -20,14 +20,18 @@ export async function loader({ request }: { request: Request }) {
     const userId: (string | null) = store.getState().auth.userId
     const token: (string | null) = store.getState().auth.accessToken
 
-    if (userId === null || token === null) return { data: [] }
+    if (userId === null || token === null) {
+        throw {
+            message: "Invalid Session. Please login again",
+            statusText: "Unauthorized",
+            status: 401
+        }
+    }
 
     const data = getChats(userId, token)
     const contacts = getContacts(userId, token)
 
-    if (userId) {
-        socket.emit('register-user', userId);
-    }
+    socket.emit('register-user', userId);
 
     return defer({ data: data, contacts: contacts })
 
@@ -80,7 +84,7 @@ export async function action({ request }: { request: Request }) {
             if (members.length === 0) {
                 throw new Error("Please add at least one member")
             }
-            
+
             await addGroup(token, name, description, members);
         }
         return { message: "Action Completed", success: true }

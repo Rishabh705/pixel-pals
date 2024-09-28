@@ -5,7 +5,6 @@ import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCloseSheets } from '@/rtk/slices/closeSheets';
 import { decryptData } from '@/lib/E2EE';
-import { useAppSelector } from '@/rtk/hooks';
 
 type ChatCardProps = {
     chatId: string;
@@ -15,18 +14,19 @@ type ChatCardProps = {
     title: string;
     lastMessage: string;
     isSender: boolean;
+    AESkey: string;
 };
 
-const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackText, title, lastMessage, isSender }) => {
+const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackText, title, lastMessage, isSender, AESkey }) => {
     const navigate: NavigateFunction = useNavigate();
     const dispatch = useDispatch();
     const [subtitle, setSubtitle] = useState<string>("");
-
+    
     const handleClick = () => {
         dispatch(setCloseSheets(false));
         navigate(link);
     };
-    const AESkey = useAppSelector(state => state.key.encryptionKey);
+
     useEffect(() => {
         const decryptMessage = async () => {
             const decryptedText = await decryptData(lastMessage, AESkey);
@@ -34,7 +34,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ chatId, link, avatarSrc, fallbackTe
         };
         if (lastMessage !== "Start Conversation")
             decryptMessage();
-    }, [lastMessage]);
+    }, [lastMessage, AESkey]);
 
     const displaySubtitle = () => {
         if (lastMessage === "Start Conversation") {
