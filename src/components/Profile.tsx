@@ -16,6 +16,7 @@ import { logoutUser } from "@/lib/api";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import { logout } from "@/rtk/slices/authSlice";
 import { AuthState } from "@/utils/types";
+import { isTokenExpired } from "@/lib/jwt";
 
 export default function Profile() {
     let token:(string|null) = useAppSelector(state => state.auth.accessToken)
@@ -30,7 +31,7 @@ export default function Profile() {
         }
     }
 
-    const isLogged: boolean = token!==null
+    const isLogged: boolean = token!==null && !isTokenExpired(token);
 
     const navigate: NavigateFunction = useNavigate();
     const dispatch = useAppDispatch()

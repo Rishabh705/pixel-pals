@@ -13,15 +13,42 @@ import { LuSendHorizonal } from "react-icons/lu";
 import { Input } from "./ui/input";
 import { useAppSelector } from '@/rtk/hooks';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import { encryptData } from '@/lib/E2EE';
+import { setKey } from '@/rtk/slices/keySlice';
 
 export async function loader({ params, request }: { params: any, request: Request }) {
   // console.log('update chat loader');
   await requireAuth(request)
   const token: (string | null) = store.getState().auth.accessToken
-  if (!token) return { data: [] }
+  const userID: (string | null) = store.getState().auth.userId
 
-  socket.emit('join-chat', params.id);
+  if (!token || !userID) return { data: [] }
+
+  const url: URL = new URL(request.url);
+
+  const type: string | null = url.searchParams.get('type');
+
+  if (type === null || (type !== 'individual' && type !== 'group'))
+    throw {
+      message: "Invalid chat type. Please go back and try again",
+      statusText: "Bad Request",
+      status: 400
+    }
+
+  socket.emit('join-chat', params.id, userID);
+
+  // Get the AES key of the sender and store in the store
+  socket.on('encryptionKey', (encryptionKey: string) => {
+
+    if (encryptionKey === '') {
+      // If the encryption key is empty, throw an error
+      throw new Error('Failed to retrieve encryption key');
+    }
+
+    store.dispatch(setKey(encryptionKey));
+  })
+
+
 
   const data: (Promise<any>) = getChat(params.id, token)
   return defer({ data })
@@ -29,56 +56,85 @@ export async function loader({ params, request }: { params: any, request: Reques
 
 export async function action({ request, params }: { request: Request, params: any }) {
   try {
-    // console.log("update chat action");
+    const form: FormData = await request.formData();
+    const message: string = form.get('message')?.toString() || '';
+    const token: string | null = store.getState().auth.accessToken;
+    const username: string | null = store.getState().auth.username;
+    const id: string | null = store.getState().auth.userId;
+
+    if (!token || !username || !id) {
+      throw {
+        message: "You are not authenticated. Please login",
+        statusText: "Unauthorized",
+        status: 401,
+      };
+    }
+
+    const chatId: string = params.id;
+    const url: URL = new URL(request.url);
+    const receiverName: string | null = url.searchParams.get("name");
+    const receiverId: string | null = url.searchParams.get("re");
+    const chatType: string | null = url.searchParams.get("type");
     
-    const form: FormData = await request.formData()
-    const message: string = form.get('message')?.toString() || ''
-    const token: (string | null) = store.getState().auth.accessToken
-    const username: (string | null) = store.getState().auth.username
-    const id: (string | null) = store.getState().auth.userId
+    if (!chatType || (chatType !== "individual" && chatType !== "group")) {
+      throw {
+        message: "Invalid chat type. Please go back and try again",
+        statusText: "Bad Request",
+        status: 400,
+      };
+    }
+
+    if (chatType==='individual' && !receiverId || !receiverName) {
+      window.location.href = '/chats';
+      return { message: "Session Error. Failed to send the message", success: false };
+    }
 
 
-    const chatId: string = params.id
-
-    const url = new URL(request.url);
-    const receiverName: string = url.searchParams.get("name") || '';
-    const receiverId: string = url.searchParams.get("re") || '';
-
-
-    if (!token || !username || !id) throw new Error('Unauthorized')
-
-    const today: Date = new Date()
-
+    const today: Date = new Date();
     const messageId: string = uuidv4();
 
+    const encryptionKey: string | undefined = store.getState().key.encryptionKey;
+
+    if (!encryptionKey) {
+      throw {
+        message: "Something went wrong. Please go back and try again",
+        statusText: "Bad Request",
+        status: 400,
+      };
+    }
+    const encryptedMessage = await encryptData(message, encryptionKey);
+
+    // Create the message object in plain text form
     const data: SocketMessage = {
       _id: messageId,
       chat_id: chatId,
-      message: message,
+      message: encryptedMessage, // Plain text message
       sender: {
         _id: id,
         avatar: '',
         username: username,
       },
       receiver: {
-        _id: receiverId,
+        _id: receiverId || '',
         avatar: '',
-        username: receiverName
+        username: receiverName,
       },
-      created_at: today.toISOString()
-    }
-    store.dispatch(setSocketMsg(data))
-    socket.emit('send-message', data)
+      created_at: today.toISOString(),
+      chat_type: chatType,
+    };
 
-    await sendMessage(message, token, messageId, chatId)
+    store.dispatch(setSocketMsg(data));
 
-    return { message: "Message Sent.", success: true }
+    socket.emit('send-message', data); // Emit with plain text for immediate feedback
 
+    await sendMessage(encryptedMessage, token, messageId, chatId);
+
+    return { message: "Message Sent", success: true };
   } catch (error: any) {
-    return { message: error.message, success: false }
+    return { message: "Failed to send the message", success: false };
   }
-
 }
+
 
 export default function UpdateChat() {
   const results: any = useLoaderData()
@@ -89,6 +145,8 @@ export default function UpdateChat() {
   const [searchParams] = useSearchParams();
   const [isTyping, setIsTyping] = React.useState<boolean>(false);
   const name: string = searchParams.get('name') || 'Title';
+  const [isOpen, setIsOpen] = React.useState(false);
+
 
   const { id } = useParams()
 
@@ -134,6 +192,11 @@ export default function UpdateChat() {
     }, 3000);
   };
 
+  const handleClick = (e: React.MouseEvent<HTMLFormElement>) => {
+    e.stopPropagation();
+    setIsOpen(false);
+  };
+
 
   return (
     <div className='flex flex-col w-screen h-screen'>
@@ -156,17 +219,13 @@ export default function UpdateChat() {
         </Link>
       </div>
 
-
       <RenderChat results={results.data} chatId={id} />
 
-      <Form className="flex gap-2 justify-start py-5 px-4 md:px-6 lg:px-8 items-center relative" method='PUT'>
-        <Emoji setText={setText} />
-        {/* <span className="p-2 bg-secondary rounded-full">
-          <LuPaperclip size={20} />
-        </span> */}
+      <Form className="flex gap-2 justify-start py-5 px-4 md:px-6 lg:px-8 items-center relative" method='PUT' onClick={(e) => handleClick(e)}>
+        <Emoji setText={setText} isOpen={isOpen} setIsOpen={setIsOpen} />
         <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={handleChange} />
         <button className="p-2 bg-primary rounded-full" type='submit'>
-          <LuSendHorizonal size={20} color="aliceblue"/>
+          <LuSendHorizonal size={20} color="aliceblue" />
         </button>
       </Form>
 

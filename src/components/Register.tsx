@@ -4,10 +4,11 @@ import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
+import { generateKeyPair } from "@/lib/helpers";
 
 export async function action({ request }: { request: Request }) {
   try {
-    const formdata:FormData = await request.formData()
+    const formdata: FormData = await request.formData()
 
     const username: string = formdata.get('username')?.toString() || ''
     const email: string = formdata.get('email')?.toString() || ''
@@ -18,10 +19,31 @@ export async function action({ request }: { request: Request }) {
     if (password1 !== password2)
       throw new Error("Passwords should match")
 
-    const res = await registerUser({ username, email, password: password1 })
+    const passwordSpecial = /[@#$%^&*()!+-]/;
 
+    if (!passwordSpecial.test(password1))
+      throw new Error("Password should contain at least one special character.")
 
-    console.log(res);
+    const passwordLower = /[a-z]/;
+
+    if (!passwordLower.test(password1))
+      throw new Error("Password should contain at least one lowercase character.")
+
+    const passwordUpper = /[A-Z]/;
+
+    if (!passwordUpper.test(password1))
+      throw new Error("Password should contain at least one uppercase character.")
+
+    const passwordDigit = /[0-9]/;
+
+    if (!passwordDigit.test(password1))
+      throw new Error("Password should contain at least one digit.")
+
+    // generate keypair after successful login
+    const {publicKey, privateKey}: CryptoKeyPair = await generateKeyPair();
+
+    await registerUser({ username, email, password: password1, publicKey, privateKey }) // not encrypting private key right now.
+
     return redirect('/login')
 
   } catch (error: any) {
@@ -55,12 +77,14 @@ export default function Register() {
         <input
           name="password1"
           type="password"
+          minLength={8}
           placeholder="Password"
           className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
         />
         <input
           name="password2"
           type="password"
+          minLength={8}
           placeholder="Password again"
           className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
         />

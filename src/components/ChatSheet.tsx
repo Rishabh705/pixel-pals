@@ -1,16 +1,12 @@
 import { Suspense, useState } from "react"
-
 import { Await } from "react-router-dom"
-
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CiSearch } from "react-icons/ci";
 import { TbFaceIdError } from "react-icons/tb";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useAppSelector } from "@/rtk/hooks";
-
-import { ChatData, GroupChat, IndividualChat, SocketMessage } from "@/utils/types"
-
+import { ChatData, GroupChat, IndividualChat, SocketMessage, User } from "@/utils/types"
 import { Skeleton } from "@/components/ui/skeleton";
 import NewChat from "@/components/NewChat";
 import ChatCard from "@/components/ChatCard";
@@ -25,16 +21,21 @@ export default function ChatSheet({ error, data, className }: { error: any; data
     const socketMessages: SocketMessage[] = useAppSelector((state) => state.socketMsgs);
     const results = data.data;
 
+    if (username === null || email === null || userId === null)
+        throw {
+            message: "Session Error. Please refresh the page",
+            statusText: "Unauthorized",
+            status: 401
+        }
+    
     const renderCards = ({ data }: { data: ChatData }) => {
 
-        const socketMessagesMap:Map<string, SocketMessage> = new Map();
-
+        const socketMessagesMap: Map<string, SocketMessage> = new Map(); // will store latest socket messages by chat_id
         for (const msg of socketMessages) {
             socketMessagesMap.set(msg.chat_id, msg);
         }
 
-        // Update individual chats with socket messages
-
+        // Update last message of individual chats with corresponding socket message
         const updatedIndividualChats: IndividualChat[] = data.individualChats.map((chat) => {
             const socketMessage: (SocketMessage | undefined) = socketMessagesMap.get(chat.chat_id);
 
@@ -45,18 +46,17 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         _id: socketMessage._id,
                         message: socketMessage.message,
                         sender: socketMessage.sender,
-
+                        chat_type: chat.chat_type,
                         created_at: socketMessage.created_at,
-
                     },
                 };
             }
             return chat;
         });
 
-        // Update group chats with socket messages
+        // Update last message of group chats with corresponding socket message
 
-        const updatedGroupChats:GroupChat[] = data.groupChats.map((chat) => {
+        const updatedGroupChats: GroupChat[] = data.groupChats.map((chat) => {
             const socketMessage: (SocketMessage | undefined) = socketMessagesMap.get(chat.chat_id);
 
             if (socketMessage) {
@@ -66,7 +66,7 @@ export default function ChatSheet({ error, data, className }: { error: any; data
                         _id: socketMessage._id,
                         message: socketMessage.message,
                         sender: socketMessage.sender,
-
+                        chat_type: chat.chat_type,
                         created_at: socketMessage.created_at,
 
                     },
@@ -80,24 +80,24 @@ export default function ChatSheet({ error, data, className }: { error: any; data
         const individualChatCards: JSX.Element[] = updatedIndividualChats
 
             .filter((chat) => {
-                const otherParticipant = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
+                const otherParticipant: User = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
                 return otherParticipant.username.toLowerCase().includes(searchText.toLowerCase());
             })
             .map((chat) => {
-                const otherParticipant = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
-                const sender = chat.lastmessage?.sender?.username || "";
-                const lastMessage = chat.lastmessage?.message || "No messages yet";
-                const subtitle = sender.toLowerCase() === username?.toLowerCase() ? `You: ${lastMessage}` : `${sender}: ${lastMessage}`;
-
+                const otherParticipant: User = chat.participant1._id === userId ? chat.participant2 : chat.participant1;
+                const lastMessage: string = chat.lastmessage?.message || "Start Conversation";
+                const isSender: boolean = chat?.lastmessage?.sender._id === userId;
                 return (
                     <ChatCard
                         key={chat.chat_id}
                         chatId={chat.chat_id}
-                        link={`${chat.chat_id}?re=${otherParticipant?._id}&&name=${otherParticipant?.username}`}
+                        link={`${chat.chat_id}?re=${otherParticipant?._id}&name=${otherParticipant?.username}&type=${chat.chat_type}`}
                         avatarSrc="https://github.com/shadcn.png"
                         fallbackText={otherParticipant?.username || ""}
                         title={otherParticipant?.username || ""}
-                        subtitle={subtitle}
+                        lastMessage={lastMessage}
+                        isSender={isSender}
+                        AESkey={chat.encrypted_aes_key}                
                     />
                 );
             });
@@ -108,20 +108,20 @@ export default function ChatSheet({ error, data, className }: { error: any; data
 
             .filter((chat) => chat.name.toLowerCase().includes(searchText.toLowerCase()))
             .map((chat) => {
-                const sender = chat.lastmessage?.sender?.username || "";
-                const lastMessage = chat.lastmessage?.message || "No messages yet :";
-                const subtitle =
-                    sender.toLowerCase() === username?.toLowerCase() ? `You: ${lastMessage}` : `${sender}: ${lastMessage}`;
+                const lastMessage: string = chat.lastmessage?.message || "Start Conversation";
+                const isSender: boolean = chat?.lastmessage?.sender._id === userId;
 
                 return (
                     <ChatCard
                         key={chat.chat_id}
                         chatId={chat.chat_id}
-                        link={`${chat.chat_id}?name=${chat.name}`}
+                        link={`${chat.chat_id}?name=${chat.name}&type=${chat.chat_type}`}
                         avatarSrc="https://github.com/shadcn.png"
                         fallbackText={chat.name}
                         title={chat.name}
-                        subtitle={subtitle}
+                        lastMessage={lastMessage}
+                        isSender={isSender}
+                        AESkey={chat.encrypted_aes_key}                
                     />
                 );
             });

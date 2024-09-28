@@ -1,4 +1,4 @@
-import { Link, Form, useLoaderData, useActionData, useNavigation, Navigation , redirect } from "react-router-dom"
+import { Link, Form, useLoaderData, useActionData, useNavigation, Navigation, redirect } from "react-router-dom"
 import { loginUser } from "../lib/api"
 import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
@@ -8,6 +8,8 @@ import { AuthState, JWTPayload } from "@/utils/types";
 import { login } from "@/rtk/slices/authSlice";
 import { jwtDecode } from "jwt-decode";
 import { store } from "@/rtk/store";
+import { useAuth0 } from "@auth0/auth0-react";
+import { storeKey } from "@/lib/helpers";
 
 
 export async function loader({ request }: { request: Request }) {
@@ -26,26 +28,31 @@ export async function action({ request }: { request: Request }) {
         const password: (FormDataEntryValue | null) = form.get('password')
 
         const res = await loginUser({ email, password })
-        
         //decode the token
         const decoded: JWTPayload = jwtDecode(res.accessToken)
 
         const authData: AuthState = {
-            userId : decoded.UserInfo._id,
-            email : decoded.UserInfo.email,
-            username : decoded.UserInfo.username,
+            userId: decoded.UserInfo._id,
+            email: decoded.UserInfo.email,
+            username: decoded.UserInfo.username,
             accessToken: res.accessToken,
         }
-            
+
 
         //store the data in the store
         store.dispatch(login(authData))
-        
+
         localStorage.setItem("loggedin", JSON.stringify(authData))
+
+        // get public key from DB
+        const encryptedBase64PrivateKey: string = res.data2; // encrypted
+
+        // Store private key in IndexedDB as data2
+        await storeKey(encryptedBase64PrivateKey, 'data2');
 
         return redirect(pathname)
 
-    } catch (error:any) {
+    } catch (error: any) {
         return error.message
     }
 
@@ -53,9 +60,10 @@ export async function action({ request }: { request: Request }) {
 
 export default function Login() {
 
-    const message:any = useLoaderData()
-    const error:any = useActionData()
-    const status:Navigation = useNavigation()
+    const message: any = useLoaderData()
+    const error: any = useActionData()
+    const status: Navigation = useNavigation()
+    const { loginWithRedirect } = useAuth0();
 
     return (
         <div className="flex flex-col items-center pt-16 pb-20 gap-8 px-7">
@@ -74,7 +82,7 @@ export default function Login() {
                     name="password"
                     type="password"
                     placeholder="Password"
-                    defaultValue='guest1'
+                    defaultValue='Guest1@123'
                     required
                     className="border border-gray-300 h-10 px-3 shadow-sm font-sans font-normal rounded-md focus:outline-none"
                 />
@@ -96,21 +104,24 @@ export default function Login() {
                         <p className="text-sm leading-5 text-red-600">{error}</p>
                     </section>
                 )}
-                <section className="text-sm text-center pt-5 pb-2.5">
+                <section className="py-2 px-3 rounded-full bg-gradient-to-r from-blue-300 to-blue-800">
+                    <em className="text-sm text-center text-white">Deployed on Free Tier, so increased response time may be experienced</em>
+                </section>
+                <section className="text-xs text-center p-2">
                     <span>Or Signin Using</span>
                 </section>
-                <section className="flex gap-5 justify-center">
-                    <Link to="#" className="bg1">
-                        <FcGoogle size={25} />
-                    </Link>
-                    <Link to="#" className="bg2">
-                        <FaGithub size={25} />
-                    </Link>
-                    <Link to="#" className="bg3">
-                        <FaFacebook color="#2486fd" size={25} />
-                    </Link>
-                </section>
             </Form>
+            <section className="flex gap-5 justify-center">
+                <button className="bg1" onClick={() => loginWithRedirect()}>
+                    <FcGoogle size={25} />
+                </button>
+                <button className="bg2">
+                    <FaGithub size={25} />
+                </button>
+                <button className="bg3">
+                    <FaFacebook color="#2486fd" size={25} />
+                </button>
+            </section>
             <Link to='/register' className="text-sm text-muted-foreground hover:underline">No account? Create one here.</Link>
         </div>
     )

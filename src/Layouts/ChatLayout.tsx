@@ -20,11 +20,18 @@ export async function loader({ request }: { request: Request }) {
     const userId: (string | null) = store.getState().auth.userId
     const token: (string | null) = store.getState().auth.accessToken
 
-    if (userId === null || token === null) return { data: [] }
+    if (userId === null || token === null) {
+        throw {
+            message: "Invalid Session. Please login again",
+            statusText: "Unauthorized",
+            status: 401
+        }
+    }
 
     const data = getChats(userId, token)
     const contacts = getContacts(userId, token)
 
+    socket.emit('register-user', userId);
 
     return defer({ data: data, contacts: contacts })
 
@@ -37,22 +44,47 @@ export async function action({ request }: { request: Request }) {
         const form: FormData = await request.formData()
         const token: (string | null) = store.getState().auth.accessToken
 
-        if (!token) throw new Error("User not authenticated.")
+        if (!token)
+            throw {
+                message: "You are not authenticated. Please login",
+                statusText: "Unauthorized",
+                status: 401,
+            };
 
 
-        const intent: string = form.get('intent')?.toString() || ''
+        const intent: string | undefined = form.get('intent')?.toString()
+
+        if (!intent)
+            throw {
+                message: "Something went wrong. Please try again",
+                statusText: "Bad Request",
+                status: 400,
+            };
 
         if (intent === 'create-contact') {
-            const email: string = form.get('email')?.toString() || ''
+            const email: string | undefined = form.get('email')?.toString()
+
+            if (!email)
+                throw new Error("Please fill in all the fields")
+
             await addContact(token, email)
             return { message: "Action Completed", success: true }
         }
 
         if (intent === 'create-group') {
-            const name = form.get('name')?.toString() || ''
-            const description = form.get('description')?.toString() || ''
+            const name: string | undefined = form.get('name')?.toString()
+            const description: string | undefined = form.get('description')?.toString()
 
-            const members = form.getAll('members') || []
+            if (!name || !description) {
+                throw new Error("Please fill in all the fields")
+            }
+
+            const members: FormDataEntryValue[] = form.getAll('members')
+
+            if (members.length === 0) {
+                throw new Error("Please add at least one member")
+            }
+
             await addGroup(token, name, description, members);
         }
         return { message: "Action Completed", success: true }
@@ -69,17 +101,9 @@ export default function ChatLayout() {
     const data: any = useLoaderData()
     const error: any = useActionData()
     const dispatch = useAppDispatch()
-    const userId:string|null = useAppSelector((state) => state.auth.userId)
-    const closeSheets:boolean = useAppSelector((state)=>state.closeSheets)
+    const closeSheets: boolean = useAppSelector((state) => state.closeSheets)
 
     useEffect(() => {
-
-        if (userId) {
-            socket.emit('register-user', userId);
-        }
-
-        console.log(userId);
-        
 
         const handleMessage = (data: SocketMessage) => {
             dispatch(setSocketMsg(data));
@@ -99,7 +123,7 @@ export default function ChatLayout() {
 
     return (
         <div className="flex h-screen border-b-2">
-            <Sheet open={closeSheets} onOpenChange={(open)=>dispatch(setCloseSheets(open))}>
+            <Sheet open={closeSheets} onOpenChange={(open) => dispatch(setCloseSheets(open))}>
                 <SheetTrigger className='flex lg:hidden absolute left-3 top-6'>
                     <GiHamburgerMenu color='#1a1a1a' size={30} />
                 </SheetTrigger>

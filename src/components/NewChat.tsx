@@ -18,7 +18,6 @@ import { useAppSelector } from "@/rtk/hooks";
 import { useNavigate, Await } from "react-router-dom";
 import CustomCard from "./CustomCard";
 import { Skeleton } from "./ui/skeleton";
-import { socket } from '@/lib/socket'
 import { AddGroup } from "./AddGroup";
 import AddContact from "./AddContact";
 
@@ -30,19 +29,10 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
   const navigate = useNavigate()
 
   const createOneonOneChat = async (contact: User) => {
-
     if (!token) throw new Error("User not authenticated.");
-    const res = await createChat(token, contact._id);
+    const res = await createChat(token, contact._id); 
     setOpen(false);
-    navigate(`/chats/${res._id}?re=${contact._id}&&name=${contact.username}`);
-    // Emit socket event to join individual chat room
-    socket.emit("join-chat", res._id);
-    
-    // Notify the recipient to join the chat room
-    socket.emit("chat-created", {
-      chatId: res._id,
-      recipientId: contact._id
-  });
+    navigate(`/chats/${res._id}?re=${contact._id}&name=${contact.username}&type=individual`);
   };
 
   const renderContacts = (contacts: User[]) => {

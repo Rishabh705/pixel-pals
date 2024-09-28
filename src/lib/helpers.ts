@@ -1,126 +1,167 @@
-import { login } from "@/rtk/slices/authSlice";
-import { store } from "@/rtk/store";
-import { AuthState, JWTPayload } from "@/utils/types";
-import { jwtDecode } from "jwt-decode";
+// Generate RSA key pair
+export async function generateKeyPair(): Promise<CryptoKeyPair> {
+    return await crypto.subtle.generateKey(
+        {
+            name: "RSA-OAEP",
+            modulusLength: 2048, // Key length in bits
+            publicExponent: new Uint8Array([1, 0, 1]), // Standard exponent
+            hash: "SHA-256" // Hash algorithm
+        },
+        true, // Extractable
+        ["encrypt", "decrypt"] // Usages
+    );
+    
+}
 
+// Storing a key in IndexedDB
+export async function storeKey(key: string, keyName: string): Promise<void> {
+    const db: IDBDatabase = await openDatabase();
+    const tx: IDBTransaction = db.transaction('keys', 'readwrite');
+    const store: IDBObjectStore = tx.objectStore('keys');
 
+    store.put(key, keyName); // Store the exported key by name
 
-// Generate a random AES key
-export async function generateKey(): Promise<CryptoKey> {
+    // Wait for transaction completion
+    await new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = (event) => reject((event.target as IDBRequest).error);
+    });
+}
+// Retrieving a key from IndexedDB
+export async function getKey(keyName: string): Promise<string> {
+    const db: IDBDatabase = await openDatabase();
+    const tx: IDBTransaction = db.transaction('keys', 'readonly');
+    const store: IDBObjectStore = tx.objectStore('keys');
+    const request: IDBRequest = store.get(keyName); // Get key by name
+
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+// Open IndexedDB for key storage
+function openDatabase(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('my-database', 1);
+        request.onupgradeneeded = (event) => {
+            const db = (event.target as IDBOpenDBRequest).result;
+            db.createObjectStore('keys'); // Create object store for keys
+        };
+        request.onsuccess = (event) => {
+            resolve((event.target as IDBOpenDBRequest).result);
+        };
+        request.onerror = (event) => {
+            reject((event.target as IDBOpenDBRequest).error);
+        };
+    });
+}
+
+// Convert base64 string to Uint8Array
+export function base64ToUint8Array(base64: string): Uint8Array {
+    return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+}
+
+// Convert Uint8Array to base64 string
+export function uint8ArrayToBase64(uint8Array: Uint8Array): string {
+    return btoa(String.fromCharCode(...uint8Array));
+}
+
+// Import AES key from base64 string
+async function importAESKey(base64Key: string): Promise<CryptoKey> {
+    const keyData = base64ToUint8Array(base64Key);
+    return crypto.subtle.importKey(
+        'raw',
+        keyData.buffer,
+        { name: 'AES-GCM' },
+        true,
+        ['encrypt', 'decrypt'] // Usages
+    );
+}
+
+export async function generateAESKey(): Promise<CryptoKey> {
     return crypto.subtle.generateKey(
         {
             name: 'AES-GCM',
-            length: 256,
+            length: 256 // Key length in bits
+        },
+        true, // Extractable
+        ['encrypt', 'decrypt'] // Usages
+    );
+}
+
+// Encrypt RSA private key using AES-GCM
+export async function encryptKey(key: CryptoKey): Promise<string> {
+    const base64EncryptionKey: string = import.meta.env.VITE_ENCRYPTION_KEY;
+    const encryptionKey: CryptoKey = await importAESKey(base64EncryptionKey);
+
+    // Determine the format based on the key type
+    const exportedKey = await crypto.subtle.exportKey('pkcs8', key);
+    const iv = crypto.getRandomValues(new Uint8Array(12)); // Generate IV
+
+    // Encrypt the key using AES-GCM
+    const encryptedKey = await crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv // Initialization vector
+        },
+        encryptionKey,
+        exportedKey // Data to encrypt
+    );
+
+    // Combine IV and encrypted key for storage
+    return uint8ArrayToBase64(new Uint8Array([...iv, ...new Uint8Array(encryptedKey)]));
+}
+
+// Decrypt encrypted base64 RSA private key using AES-GCM
+export async function decryptKey(encryptedKeyBase64: string): Promise<CryptoKey> {
+    const base64EncryptionKey: string = import.meta.env.VITE_ENCRYPTION_KEY;
+    const encryptionKey: CryptoKey = await importAESKey(base64EncryptionKey);
+    const encryptedData: Uint8Array = base64ToUint8Array(encryptedKeyBase64);
+
+    const iv: Uint8Array = encryptedData.slice(0, 12); // Extract IV
+    const encryptedKey: Uint8Array = encryptedData.slice(12); // Extract encrypted key
+
+    // Decrypt the key using AES-GCM
+    const decryptedKeyBuffer: ArrayBuffer = await crypto.subtle.decrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv // Initialization vector
+        },
+        encryptionKey,
+        encryptedKey // Data to decrypt
+    );
+
+    // Import the decrypted key for further usage
+    const decryptedKey = await crypto.subtle.importKey(
+        'pkcs8', // Format for RSA private keys
+        decryptedKeyBuffer,
+        {
+            name: 'RSA-OAEP',
+            hash: 'SHA-256'
         },
         true,
-        ['encrypt', 'decrypt']
+        ['decrypt'] // Usages
     );
+    return decryptedKey;
 }
 
-// Encrypt message
-export async function encryptMessage(message: string, key: CryptoKey): Promise<{ iv: string, encryptedMessage: string }> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(message);
-    
-    // Generate a random initialization vector (IV)
-    const iv = crypto.getRandomValues(new Uint8Array(12)); // AES-GCM uses a 12-byte IV
-    
-    const encryptedBuffer = await crypto.subtle.encrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        key,
-        data
-    );
-    
-    // Convert buffers to base64
-    const encryptedArray = new Uint8Array(encryptedBuffer);
-    const encryptedMessage = btoa(String.fromCharCode(...encryptedArray));
-    const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
-    
-    return {
-        iv: ivHex,
-        encryptedMessage
-    };
-}
-
-// Decrypt message
-export async function decryptMessage(encryptedMessage: string, ivHex: string, key: CryptoKey): Promise<string> {
-    const encryptedArray = Uint8Array.from(atob(encryptedMessage), c => c.charCodeAt(0));
-    const iv = Uint8Array.from(ivHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        key,
-        encryptedArray
-    );
-    
-    const decoder = new TextDecoder();
-    return decoder.decode(decryptedBuffer);
-}
-
-// Helper function to refresh access token
-export async function refreshAccessToken(url: string): Promise<string | null> {
-    try {
-        const res: Response = await fetch(`${url}/refresh`, {
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-
-        if (!res.ok) {
-            throw new Error('Failed to refresh token');
-        }
-
-        const data: { accessToken: string } = await res.json();
-        const newAccessToken: string = data.accessToken;
-
-        //decode the token
-        const decoded: JWTPayload = jwtDecode(newAccessToken)
-
-        const authData: AuthState = {
-            userId: decoded.UserInfo._id,
-            email: decoded.UserInfo.email,
-            username: decoded.UserInfo.username,
-            accessToken: newAccessToken,
-        }
-
-        //store the data in the store
-        store.dispatch(login(authData))
-        localStorage.setItem("loggedin", JSON.stringify(authData))
-
-        return newAccessToken;
-    } catch (error) {
-        // console.error('Error refreshing access token:', error);
-        return null;
+// Utility functions
+export function base64ToArrayBuffer(base64:string):ArrayBuffer {
+    const binaryString:string = window.atob(base64);
+    const len:number = binaryString.length;
+    const bytes:Uint8Array = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
     }
+    return bytes.buffer;
 }
 
-// Wrapper function to handle token refreshing
-export async function fetchWithAuth(url: string, endpoint: string, options: RequestInit): Promise<Response> {
-    options.credentials = 'include';
-
-    let res: Response = await fetch(`${url}${endpoint}`, options);
-
-    if (res.status === 403) { // Token might have expired
-        const newAccessToken = await refreshAccessToken(url);
-        if (newAccessToken) {
-            // Retry with the new access token
-            options.headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${newAccessToken}`,
-            };
-            res = await fetch(`${url}${endpoint}`, options);
-        } else {
-            // Handle refresh failure (e.g., log out the user)
-            // console.error('Failed to refresh token. Redirecting to login.');
-            localStorage.removeItem("loggedin")
-            window.location.href = '/login?message=Session expired. Please log in again.';
-        }
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
     }
-
-    return res;
+    return btoa(binary);
 }
