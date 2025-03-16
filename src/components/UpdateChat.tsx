@@ -48,8 +48,6 @@ export async function loader({ params, request }: { params: any, request: Reques
     store.dispatch(setKey(encryptionKey));
   })
 
-
-
   const data: (Promise<any>) = getChat(params.id, token)
   return defer({ data })
 }
@@ -89,7 +87,7 @@ export async function action({ request, params }: { request: Request, params: an
       return { message: "Session Error. Failed to send the message", success: false };
     }
 
-
+    
     const today: Date = new Date();
     const messageId: string = uuidv4();
 

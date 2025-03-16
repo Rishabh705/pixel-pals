@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, defer, useLoaderData, useActionData } from "react-router-dom"
 import { store } from "@/rtk/store";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet"
-import { addContact, getChats, getContacts, addGroup } from "@/lib/api";
+import { addContact, getChats, getContacts, addGroup, getPublicKey } from "@/lib/api";
 import { requireAuth } from "@/lib/requireAuth";
 import { SocketMessage } from "@/utils/types";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
@@ -12,6 +12,7 @@ import ChatSheet from "@/components/ChatSheet";
 import { GiHamburgerMenu } from "react-icons/gi";
 import '../styles/chatlayout.css'
 import { setCloseSheets } from "@/rtk/slices/closeSheets";
+import { encryptSymmetricKey } from "@/lib/helpers";
 
 export async function loader({ request }: { request: Request }) {
     // console.log("chatlayout loader..");
@@ -28,8 +29,8 @@ export async function loader({ request }: { request: Request }) {
         }
     }
 
-    const data = getChats(userId, token)
-    const contacts = getContacts(userId, token)
+    const data = getChats(token)
+    const contacts = getContacts(token)
 
     socket.emit('register-user', userId);
 
@@ -84,8 +85,32 @@ export async function action({ request }: { request: Request }) {
             if (members.length === 0) {
                 throw new Error("Please add at least one member")
             }
+            const membersKeys = new Map<string, string>();
 
-            await addGroup(token, name, description, members);
+            // We'll collect IDs in this array
+            const memberIds: string[] = [];
+
+            const publicKeyPromises = members.map(async (member) => {
+                // Parse JSON string
+                const memberObj = JSON.parse(member.toString()); // { id, email }
+
+                const publicKey = await getPublicKey(memberObj.email, token);
+                if (!publicKey) {
+                    throw new Error(`Public key for ${memberObj.email} not found`);
+                }
+
+                membersKeys.set(memberObj.id, publicKey);
+                memberIds.push(memberObj.id); // Collect ID here
+
+                return { memberId: memberObj.id, email: memberObj.email, publicKey };
+            });
+
+            await Promise.all(publicKeyPromises);
+
+            const { encryptedAESKeys } = await encryptSymmetricKey(membersKeys);
+
+            await addGroup(token, name, description, memberIds, encryptedAESKeys);
+
         }
         return { message: "Action Completed", success: true }
 

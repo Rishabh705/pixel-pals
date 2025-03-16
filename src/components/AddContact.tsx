@@ -22,7 +22,6 @@ export default function AddContact({ error }: { error: { message: string, succes
     const actionData: any = useActionData()
 
     useEffect(() => {
-        // console.log("action data for add contacts: ", actionData);
         if (actionData?.success) {
             setOpen(false)
         }
@@ -46,8 +45,8 @@ export default function AddContact({ error }: { error: { message: string, succes
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-right">
-                                Email
+                            <Label htmlFor="email">
+                                Receiver ID
                             </Label>
                             <Input name="email" className="col-span-3" required/>
                         </div>
@@ -58,6 +57,12 @@ export default function AddContact({ error }: { error: { message: string, succes
                             </div>
                         )}
                     </div>
+                        {!actionData?.success && (
+                            <section className="flex gap-4 p-2.5 bg-red-200 rounded-md mb-4">
+                                <BiSolidError className="h-5 w-5 text-red-600" />
+                                <p className="text-sm leading-5 text-red-600">{actionData?.message}</p>
+                            </section>
+                        )}
                     <DialogFooter>
                         <Button type="submit" name="intent" value='create-contact' disabled={status.state === "submitting"}
                             className={`${status.state !== "submitting" && "hover:bg-orange-600 cursor-pointer"} ${status.state === "submitting" && "opacity-40"}`}

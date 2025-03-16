@@ -9,7 +9,6 @@ import { login } from "@/rtk/slices/authSlice";
 import { jwtDecode } from "jwt-decode";
 import { store } from "@/rtk/store";
 import { useAuth0 } from "@auth0/auth0-react";
-import { storeKey } from "@/lib/helpers";
 
 
 export async function loader({ request }: { request: Request }) {
@@ -29,13 +28,12 @@ export async function action({ request }: { request: Request }) {
 
         const res = await loginUser({ email, password })
         //decode the token
-        const decoded: JWTPayload = jwtDecode(res.accessToken)
-
+        const decoded: JWTPayload = jwtDecode(res.data.accessToken)
         const authData: AuthState = {
             userId: decoded.UserInfo._id,
             email: decoded.UserInfo.email,
             username: decoded.UserInfo.username,
-            accessToken: res.accessToken,
+            accessToken: res.data.accessToken,
         }
 
 
@@ -43,12 +41,6 @@ export async function action({ request }: { request: Request }) {
         store.dispatch(login(authData))
 
         localStorage.setItem("loggedin", JSON.stringify(authData))
-
-        // get public key from DB
-        const encryptedBase64PrivateKey: string = res.data2; // encrypted
-
-        // Store private key in IndexedDB as data2
-        await storeKey(encryptedBase64PrivateKey, 'data2');
 
         return redirect(pathname)
 

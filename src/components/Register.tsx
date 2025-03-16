@@ -4,7 +4,7 @@ import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
-import { generateKeyPair } from "@/lib/helpers";
+import { generateKeyPair, storeKey } from "@/lib/helpers";
 
 export async function action({ request }: { request: Request }) {
   try {
@@ -41,12 +41,15 @@ export async function action({ request }: { request: Request }) {
 
     // generate keypair after successful login
     const {publicKey, privateKey}: CryptoKeyPair = await generateKeyPair();
-
-    await registerUser({ username, email, password: password1, publicKey, privateKey }) // not encrypting private key right now.
-
+    await Promise.all([
+      storeKey(privateKey, "privateKey"),
+      storeKey(publicKey, "publicKey"),
+      registerUser({ username, email, password: password1, publicKey })
+    ])
     return redirect('/login')
 
   } catch (error: any) {
+    console.log(error)
     return error.message
   }
 }

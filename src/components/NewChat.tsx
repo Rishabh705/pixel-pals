@@ -13,13 +13,14 @@ import { CiSearch } from "react-icons/ci";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/utils/types";
 
-import { createChat } from "@/lib/api";
+import { createChat, getPublicKey } from "@/lib/api";
 import { useAppSelector } from "@/rtk/hooks";
 import { useNavigate, Await } from "react-router-dom";
 import CustomCard from "./CustomCard";
 import { Skeleton } from "./ui/skeleton";
 import { AddGroup } from "./AddGroup";
 import AddContact from "./AddContact";
+import { arrayBufferToBase64, getKey } from "@/lib/helpers";
 
 
 export default function NewChat({ contacts, error, className }: { contacts: any, error:  {message:string, success:boolean}, className?: string }) {
@@ -27,13 +28,36 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
   const [open, setOpen] = React.useState<boolean>(false)
   const token = useAppSelector((state) => state.auth.accessToken)
   const navigate = useNavigate()
+  const userId: string|null = useAppSelector((state) => state.auth.userId)
 
   const createOneonOneChat = async (contact: User) => {
-    if (!token) throw new Error("User not authenticated.");
-    const res = await createChat(token, contact._id); 
+    if (!token || !userId) throw new Error("User not authenticated.");
+
+    // Fetch sender public key from IndexedDB AND receiver public key from server in parallel
+    const [senderPublicKey, recieverPublicKey] = await Promise.all([
+        getKey("publicKey"),
+        getPublicKey(contact.email, token)
+    ]);
+
+    if (!senderPublicKey) throw new Error("Sender public key not found");
+    if (!recieverPublicKey) throw new Error("Receiver public key not found");
+
+    // Export sender's public key
+    const exportedPublicKey: ArrayBuffer = await crypto.subtle.exportKey('spki', senderPublicKey);
+    const publicKeyArrayBuffer: Uint8Array = new Uint8Array(exportedPublicKey);
+    const publicKeyBase64: string = arrayBufferToBase64(publicKeyArrayBuffer);
+
+    // Prepare members keys
+    const membersKeys = new Map<string, string>();
+    membersKeys.set(contact._id, recieverPublicKey);
+    membersKeys.set(userId, publicKeyBase64);
+
+    // Create chat
+    const res = await createChat(token, contact._id, membersKeys);
     setOpen(false);
     navigate(`/chats/${res._id}?re=${contact._id}&name=${contact.username}&type=individual`);
-  };
+};
+
 
   const renderContacts = (contacts: User[]) => {
 
