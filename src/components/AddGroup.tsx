@@ -19,7 +19,7 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 
 
-export function AddGroup({ error, contacts }: { error: { message: string, success: boolean, contact?: boolean, group?: boolean }, contacts: any }) {
+export function AddGroup({ error, contacts }: { error: { message: string, success: boolean, contact?: boolean, group?: boolean }, contacts: Promise<User[]> }) {
     const [searchText, setSearchText] = React.useState<string>("");
     const [open, setOpen] = React.useState<boolean>(false)
     const [members, setMembers] = React.useState<string[]>([]);
@@ -27,7 +27,6 @@ export function AddGroup({ error, contacts }: { error: { message: string, succes
     const actionData: any = useActionData()
 
     React.useEffect(() => {
-        // console.log("action data for add group: ", actionData);
         if (actionData?.success) {
             setOpen(false)
         }

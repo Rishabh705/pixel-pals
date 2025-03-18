@@ -3,9 +3,6 @@ import { Button } from "./ui/button";
 
 export default function Error() {
   const error: any = useRouteError()
-  if(error){
-    console.error(error)
-  }
   const navigate:NavigateFunction = useNavigate(); 
   const handleGoBack = () => {
     navigate(-1); // Goes back one step in history

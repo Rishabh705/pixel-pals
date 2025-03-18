@@ -32,7 +32,10 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
 
   const createOneonOneChat = async (contact: User) => {
     if (!token || !userId) throw new Error("User not authenticated.");
-
+    
+    if (!contact.email) {
+      throw new Error("Email of receiver is missing.");
+    }
     // Fetch sender public key from IndexedDB AND receiver public key from server in parallel
     const [senderPublicKey, recieverPublicKey] = await Promise.all([
         getKey("publicKey"),

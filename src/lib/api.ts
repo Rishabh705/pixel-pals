@@ -1,4 +1,5 @@
-import { arrayBufferToBase64, cryptoKeyToBase64, encryptSymmetricKey } from './helpers';
+import { ChatDetailsResponse, LoginResponse, RegisterResponse, SendMessageResponse, User, UserChatsResponse } from '@/utils/types';
+import { cryptoKeyToBase64, encryptSymmetricKey } from './helpers';
 import { AuthenticatedFetch } from './jwt';
 
 // fetch search results
@@ -6,7 +7,7 @@ const url = import.meta.env.VITE_SERVER
 
 //authentication
 
-export async function loginUser(formdata: { email: (FormDataEntryValue | null), password: (FormDataEntryValue | null) }): Promise<any> {
+export async function loginUser(formdata: { email: (FormDataEntryValue | null), password: (FormDataEntryValue | null) }): Promise<LoginResponse> {
     const res: Response = await fetch(`${url}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -36,7 +37,7 @@ export async function registerUser(
         password: string,
         publicKey: CryptoKey,
     }
-): Promise<any> {
+): Promise<RegisterResponse> {
 
     const publicKeyBase64: string = await cryptoKeyToBase64(formdata.publicKey);
 
@@ -64,7 +65,7 @@ export async function registerUser(
     return data
 }
 
-export async function logoutUser(): Promise<any> {
+export async function logoutUser(): Promise<{ message: string }> {
     const res: Response = await fetch(`${url}/api/auth/logout`, {
         credentials: 'include'
     });
@@ -78,10 +79,10 @@ export async function logoutUser(): Promise<any> {
     }
 
     return { message: "Logged out" };
-} 
+}
 
 
-export async function getPublicKey(email: string, token: string): Promise<any> {
+export async function getPublicKey(email: string, token: string): Promise<string> {
 
     const options = {
         headers: {
@@ -104,7 +105,7 @@ export async function getPublicKey(email: string, token: string): Promise<any> {
 }
 
 //chats
-export async function getChats(token: string): Promise<any> {
+export async function getChats(token: string): Promise<UserChatsResponse> {
 
     const options = {
         headers: {
@@ -127,7 +128,7 @@ export async function getChats(token: string): Promise<any> {
     return data
 }
 
-export async function getChat(chatID: string, token: string): Promise<any> {
+export async function getChat(chatID: string, token: string): Promise<ChatDetailsResponse> {
     const options = {
         headers: {
             'Content-Type': 'application/json',
@@ -150,8 +151,8 @@ export async function getChat(chatID: string, token: string): Promise<any> {
     return data
 }
 
-export async function createChat(token: string, receiverID: string, publicKeysBase64Map: Map<string, string>): Promise<any> {
-    const {encryptedAESKeys} = await encryptSymmetricKey(publicKeysBase64Map);
+export async function createChat(token: string, receiverID: string, publicKeysBase64Map: Map<string, string>): Promise<{_id:string}> {
+    const { encryptedAESKeys } = await encryptSymmetricKey(publicKeysBase64Map);
     const options = {
         method: 'POST',
         headers: {
@@ -179,7 +180,7 @@ export async function createChat(token: string, receiverID: string, publicKeysBa
 }
 
 
-export async function addContact(token: string, email: string): Promise<any> {
+export async function addContact(token: string, email: string): Promise<User[]> {
     const options = {
         method: 'POST',
         headers: {
@@ -205,7 +206,7 @@ export async function addContact(token: string, email: string): Promise<any> {
     return data.data
 }
 
-export async function getContacts(token: string): Promise<any> {
+export async function getContacts(token: string): Promise<User[]> {
     const options = {
         headers: {
             'Content-Type': 'application/json',
@@ -228,7 +229,7 @@ export async function getContacts(token: string): Promise<any> {
 }
 
 
-export async function sendMessage(message: string, token: string, messageID: string, chatID?: string): Promise<any> {
+export async function sendMessage(message: string, token: string, messageID: string, chatID?: string): Promise<SendMessageResponse> {
 
     let method = 'POST'
 
@@ -263,7 +264,7 @@ export async function sendMessage(message: string, token: string, messageID: str
 
 }
 
-export async function addGroup(token: string, name: string, description: string, members: FormDataEntryValue[], encryptedAESKeys: Map<string, string>): Promise<any> {
+export async function addGroup(token: string, name: string, description: string, members: FormDataEntryValue[], encryptedAESKeys: Map<string, string>): Promise<{_id:string}> {
 
     const options = {
         method: 'POST',
@@ -289,7 +290,7 @@ export async function addGroup(token: string, name: string, description: string,
             status: res.status,
         }
     }
-
+    console.log(data);
     return data
 }
 
