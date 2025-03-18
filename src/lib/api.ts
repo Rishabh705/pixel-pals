@@ -1,4 +1,4 @@
-import { arrayBufferToBase64, encryptSymmetricKey } from './helpers';
+import { arrayBufferToBase64, cryptoKeyToBase64, encryptSymmetricKey } from './helpers';
 import { AuthenticatedFetch } from './jwt';
 
 // fetch search results
@@ -38,12 +38,7 @@ export async function registerUser(
     }
 ): Promise<any> {
 
-    const exportedPublicKey: ArrayBuffer = await crypto.subtle.exportKey('spki', formdata.publicKey);
-
-    const publicKeyArrayBuffer: Uint8Array = new Uint8Array(exportedPublicKey);
-
-    // Convert ArrayBuffer to base64 for JSON serialization
-    const publicKeyBase64: string = arrayBufferToBase64(publicKeyArrayBuffer);
+    const publicKeyBase64: string = await cryptoKeyToBase64(formdata.publicKey);
 
     const res: Response = await fetch(`${url}/api/auth/register/`, {
         method: 'POST',

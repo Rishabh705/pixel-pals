@@ -20,7 +20,7 @@ import CustomCard from "./CustomCard";
 import { Skeleton } from "./ui/skeleton";
 import { AddGroup } from "./AddGroup";
 import AddContact from "./AddContact";
-import { arrayBufferToBase64, getKey } from "@/lib/helpers";
+import { getKey } from "@/lib/helpers";
 
 
 export default function NewChat({ contacts, error, className }: { contacts: any, error:  {message:string, success:boolean}, className?: string }) {
@@ -42,15 +42,10 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
     if (!senderPublicKey) throw new Error("Sender public key not found");
     if (!recieverPublicKey) throw new Error("Receiver public key not found");
 
-    // Export sender's public key
-    const exportedPublicKey: ArrayBuffer = await crypto.subtle.exportKey('spki', senderPublicKey);
-    const publicKeyArrayBuffer: Uint8Array = new Uint8Array(exportedPublicKey);
-    const publicKeyBase64: string = arrayBufferToBase64(publicKeyArrayBuffer);
-
     // Prepare members keys
     const membersKeys = new Map<string, string>();
     membersKeys.set(contact._id, recieverPublicKey);
-    membersKeys.set(userId, publicKeyBase64);
+    membersKeys.set(userId, senderPublicKey);
 
     // Create chat
     const res = await createChat(token, contact._id, membersKeys);

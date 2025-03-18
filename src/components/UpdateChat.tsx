@@ -9,7 +9,7 @@ import { socket } from "@/lib/socket"
 import { setSocketMsg } from "@/rtk/slices/socketMsgSlice";
 import RenderChat from "./RenderChat";
 import Emoji from "./Emoji";
-import { LuSendHorizonal } from "react-icons/lu";
+import { LuSendHorizontal } from "react-icons/lu";
 import { Input } from "./ui/input";
 import { useAppSelector } from '@/rtk/hooks';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -67,7 +67,7 @@ export async function action({ request, params }: { request: Request, params: an
         status: 401,
       };
     }
-
+    
     const chatId: string = params.id;
     const url: URL = new URL(request.url);
     const receiverName: string | null = url.searchParams.get("name");
@@ -81,18 +81,18 @@ export async function action({ request, params }: { request: Request, params: an
         status: 400,
       };
     }
-
+    
     if (chatType==='individual' && !receiverId || !receiverName) {
       window.location.href = '/chats';
       return { message: "Session Error. Failed to send the message", success: false };
     }
-
+    
     
     const today: Date = new Date();
     const messageId: string = uuidv4();
-
+    
     const encryptionKey: string | undefined = store.getState().key.encryptionKey;
-
+    
     if (!encryptionKey) {
       throw {
         message: "Something went wrong. Please go back and try again",
@@ -124,7 +124,6 @@ export async function action({ request, params }: { request: Request, params: an
     store.dispatch(setSocketMsg(data));
 
     socket.emit('send-message', data); // Emit with plain text for immediate feedback
-
     await sendMessage(encryptedMessage, token, messageId, chatId);
 
     return { message: "Message Sent", success: true };
@@ -223,7 +222,7 @@ export default function UpdateChat() {
         <Emoji setText={setText} isOpen={isOpen} setIsOpen={setIsOpen} />
         <Input className="rounded-full bg-slate-100 border-none px-5" placeholder="Type a message" name="message" required value={text} onChange={handleChange} />
         <button className="p-2 bg-primary rounded-full" type='submit'>
-          <LuSendHorizonal size={20} color="aliceblue" />
+          <LuSendHorizontal  size={20} color="aliceblue" />
         </button>
       </Form>
 

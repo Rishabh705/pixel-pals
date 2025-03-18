@@ -12,7 +12,7 @@ import ChatSheet from "@/components/ChatSheet";
 import { GiHamburgerMenu } from "react-icons/gi";
 import '../styles/chatlayout.css'
 import { setCloseSheets } from "@/rtk/slices/closeSheets";
-import { encryptSymmetricKey } from "@/lib/helpers";
+import { encryptSymmetricKey, getKey } from "@/lib/helpers";
 
 export async function loader({ request }: { request: Request }) {
     // console.log("chatlayout loader..");
@@ -39,7 +39,6 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
-    // console.log("chatlayout action..");
 
     try {
         const form: FormData = await request.formData()
@@ -75,6 +74,10 @@ export async function action({ request }: { request: Request }) {
         if (intent === 'create-group') {
             const name: string | undefined = form.get('name')?.toString()
             const description: string | undefined = form.get('description')?.toString()
+            const userId: string | null = store.getState().auth.userId;
+            if(!userId){
+                throw new Error("Session expired. Please login again.")
+            }
 
             if (!name || !description) {
                 throw new Error("Please fill in all the fields")
@@ -86,7 +89,8 @@ export async function action({ request }: { request: Request }) {
                 throw new Error("Please add at least one member")
             }
             const membersKeys = new Map<string, string>();
-
+            const senderPublicKey:string = await getKey("publicKey");
+            membersKeys.set(userId, senderPublicKey);
             // We'll collect IDs in this array
             const memberIds: string[] = [];
 

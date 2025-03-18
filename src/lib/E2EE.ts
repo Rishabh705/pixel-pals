@@ -5,19 +5,35 @@ let cachedPrivateKey: CryptoKey | null = null;
 
 export async function loadPrivateKey(): Promise<CryptoKey> {
     if (cachedPrivateKey) {
-        return cachedPrivateKey; // Return cached private key if available
+        return cachedPrivateKey; // Return cached private key if already cached
     }
 
     try {
-        // Retrieve and import the private key from IndexedDB
-        const privateKey: CryptoKey = await getKey('privateKey');
-        cachedPrivateKey = privateKey; // Cache for future
+        const privateKeyBase64: string = await getKey('privateKey');
+
+        const keyBuffer: ArrayBuffer = base64ToArrayBuffer(privateKeyBase64);
+
+        const privateKey: CryptoKey = await window.crypto.subtle.importKey(
+            'pkcs8', // Format for private key
+            keyBuffer,
+            {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            },
+            true, // extractable
+            ['decrypt'] // key usages
+        );
+
+        // Cache it for future use
+        cachedPrivateKey = privateKey;
+
         return privateKey;
     } catch (err) {
         console.error("Failed to load private key from IndexedDB:", err);
         throw new Error("Private key not found or corrupted.");
     }
 }
+
 
 // Decrypt the AES key using the private RSA key
 async function decryptSymmetricKey(encryptedAESKeyBase64: string): Promise<CryptoKey> {

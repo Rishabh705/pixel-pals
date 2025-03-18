@@ -33,36 +33,24 @@ export async function storeKey(key: CryptoKey, keyName: string): Promise<void> {
     });
 }
 
-export async function getKey(keyName: string): Promise<CryptoKey> {
+export async function getKey(keyName: string): Promise<string> {
     const db: IDBDatabase = await openDatabase();
     const tx: IDBTransaction = db.transaction('keys', 'readonly');
     const store: IDBObjectStore = tx.objectStore('keys');
     const request: IDBRequest = store.get(keyName);
 
     return new Promise((resolve, reject) => {
-        request.onsuccess = async () => {
+        request.onsuccess = () => {
             const result = request.result;
             if (!result) return reject('Key not found');
-            
-            const { keyData, format, algorithm, usages, type } = result;
-            const keyBuffer = base64ToArrayBuffer(keyData);
 
-            try {
-                const importedKey = await crypto.subtle.importKey(
-                    format,
-                    keyBuffer,
-                    algorithm,
-                    true,
-                    usages
-                );
-                resolve(importedKey);
-            } catch (err) {
-                reject(err);
-            }
+            const { keyData } = result;  // keyData is already base64
+            resolve(keyData);
         };
         request.onerror = () => reject(request.error);
     });
 }
+
 
 
 // Open IndexedDB for key storage
@@ -82,18 +70,6 @@ function openDatabase(): Promise<IDBDatabase> {
     });
 }
 
-
-// Import AES key from base64 string
-async function importAESKey(base64Key: string): Promise<CryptoKey> {
-    const keyData = base64ToArrayBuffer(base64Key);
-    return crypto.subtle.importKey(
-        'raw',
-        keyData,
-        { name: 'AES-GCM' },
-        true,
-        ['encrypt', 'decrypt'] // Usages
-    );
-}
 
 export async function generateAESKey(): Promise<CryptoKey> {
     return crypto.subtle.generateKey(
@@ -164,4 +140,17 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
         binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
+}
+
+export async function cryptoKeyToBase64(key: CryptoKey): Promise<string> {
+    const format: "pkcs8" | "spki" | "raw" = key.type === 'private' 
+        ? "pkcs8" 
+        : key.type === 'public' 
+            ? "spki" 
+            : "raw"; // For symmetric keys (like AES)
+
+    const exportedKey: ArrayBuffer = await crypto.subtle.exportKey(format, key);
+
+    // Directly convert ArrayBuffer to base64 (no need to wrap in Uint8Array before)
+    return arrayBufferToBase64(exportedKey);
 }
