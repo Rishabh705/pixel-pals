@@ -6,7 +6,7 @@ import { store } from "@/rtk/store";
 import { SocketMessage } from "@/utils/types";
 import { v4 as uuidv4 } from 'uuid';
 
-export async function action({ request, params }: { request: Request, params: {id:string} }) {
+export async function action({ request, params }: { request: Request, params: any }) {
   try {
     const form: FormData = await request.formData();
     const message: string = form.get('message')?.toString() || '';

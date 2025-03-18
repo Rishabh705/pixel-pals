@@ -6,7 +6,7 @@ import { store } from "@/rtk/store";
 import { ChatDetailsResponse } from "@/utils/types";
 import { defer } from "react-router-dom";
 
-export async function loader({ params, request }: { params: {id:string}, request: Request }) {
+export async function loader({ params, request }: { params: any, request: Request }) {
     await requireAuth(request)
     const token: (string | null) = store.getState().auth.accessToken
     const userID: (string | null) = store.getState().auth.userId
