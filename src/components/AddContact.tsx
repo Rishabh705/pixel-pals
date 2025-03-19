@@ -57,12 +57,6 @@ export default function AddContact({ error }: { error: { message: string, succes
                             </div>
                         )}
                     </div>
-                        {!actionData?.success && (
-                            <section className="flex gap-4 p-2.5 bg-red-200 rounded-md mb-4">
-                                <BiSolidError className="h-5 w-5 text-red-600" />
-                                <p className="text-sm leading-5 text-red-600">{actionData?.message}</p>
-                            </section>
-                        )}
                     <DialogFooter>
                         <Button type="submit" name="intent" value='create-contact' disabled={status.state === "submitting"}
                             className={`${status.state !== "submitting" && "hover:bg-orange-600 cursor-pointer"} ${status.state === "submitting" && "opacity-40"}`}
