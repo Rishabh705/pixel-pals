@@ -48,7 +48,7 @@ export default function AddContact({ error }: { error: { message: string, succes
                             <Label htmlFor="email">
                                 Receiver ID
                             </Label>
-                            <Input name="email" className="col-span-3" required/>
+                            <Input name="email" className="col-span-3" required defaultValue="guest2@gmail.com"/>
                         </div>
                         {error && !error.success && error.contact && (
                             <div className="flex gap-4 p-2.5 bg-red-200 rounded-md">
