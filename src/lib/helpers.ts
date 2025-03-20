@@ -13,32 +13,45 @@ export async function generateKeyPair(): Promise<CryptoKeyPair> {
     
 }
 
-// Storing a key in IndexedDB
-export async function storeKey(key: string, keyName: string): Promise<void> {
+// Storing a RSA key in IndexedDB
+export async function storeKey(key: CryptoKey, keyName: string): Promise<void> {
+    const format = key.type === "private" ? "pkcs8" : key.type === "public" ? "spki" : "raw";
+    const exportedKey = await crypto.subtle.exportKey(format, key);
+
+    const keyDataBase64 = arrayBufferToBase64(exportedKey);
+
     const db: IDBDatabase = await openDatabase();
     const tx: IDBTransaction = db.transaction('keys', 'readwrite');
     const store: IDBObjectStore = tx.objectStore('keys');
 
-    store.put(key, keyName); // Store the exported key by name
+    // Store the base64 string
+    store.put({ keyData: keyDataBase64, format, algorithm: key.algorithm, usages: key.usages, type: key.type }, keyName);
 
-    // Wait for transaction completion
-    await new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         tx.oncomplete = () => resolve();
         tx.onerror = (event) => reject((event.target as IDBRequest).error);
     });
 }
-// Retrieving a key from IndexedDB
+
 export async function getKey(keyName: string): Promise<string> {
     const db: IDBDatabase = await openDatabase();
     const tx: IDBTransaction = db.transaction('keys', 'readonly');
     const store: IDBObjectStore = tx.objectStore('keys');
-    const request: IDBRequest = store.get(keyName); // Get key by name
+    const request: IDBRequest = store.get(keyName);
 
     return new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
+        request.onsuccess = () => {
+            const result = request.result;
+            if (!result) return reject('Key not found');
+
+            const { keyData } = result;  // keyData is already base64
+            resolve(keyData);
+        };
         request.onerror = () => reject(request.error);
     });
 }
+
+
 
 // Open IndexedDB for key storage
 function openDatabase(): Promise<IDBDatabase> {
@@ -57,27 +70,6 @@ function openDatabase(): Promise<IDBDatabase> {
     });
 }
 
-// Convert base64 string to Uint8Array
-export function base64ToUint8Array(base64: string): Uint8Array {
-    return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-}
-
-// Convert Uint8Array to base64 string
-export function uint8ArrayToBase64(uint8Array: Uint8Array): string {
-    return btoa(String.fromCharCode(...uint8Array));
-}
-
-// Import AES key from base64 string
-async function importAESKey(base64Key: string): Promise<CryptoKey> {
-    const keyData = base64ToUint8Array(base64Key);
-    return crypto.subtle.importKey(
-        'raw',
-        keyData.buffer,
-        { name: 'AES-GCM' },
-        true,
-        ['encrypt', 'decrypt'] // Usages
-    );
-}
 
 export async function generateAESKey(): Promise<CryptoKey> {
     return crypto.subtle.generateKey(
@@ -90,60 +82,44 @@ export async function generateAESKey(): Promise<CryptoKey> {
     );
 }
 
-// Encrypt RSA private key using AES-GCM
-export async function encryptKey(key: CryptoKey): Promise<string> {
-    const base64EncryptionKey: string = import.meta.env.VITE_ENCRYPTION_KEY;
-    const encryptionKey: CryptoKey = await importAESKey(base64EncryptionKey);
+// Encrypt the AES key for each participant using their public RSA key
+export async function encryptSymmetricKey(publicKeysBase64Map: Map<string, string>) {
+    // Generate a single AES key for the group
+    const symmetricKey = await generateAESKey();
 
-    // Determine the format based on the key type
-    const exportedKey = await crypto.subtle.exportKey('pkcs8', key);
-    const iv = crypto.getRandomValues(new Uint8Array(12)); // Generate IV
+    // Export the AES key for encryption with RSA
+    const exportedKey = await window.crypto.subtle.exportKey("raw", symmetricKey);
 
-    // Encrypt the key using AES-GCM
-    const encryptedKey = await crypto.subtle.encrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv // Initialization vector
-        },
-        encryptionKey,
-        exportedKey // Data to encrypt
-    );
+    // map to store the encrypted AES keys for each participant
+    const encryptedAESKeys = new Map();
 
-    // Combine IV and encrypted key for storage
-    return uint8ArrayToBase64(new Uint8Array([...iv, ...new Uint8Array(encryptedKey)]));
-}
+    for (const id_key_pair of publicKeysBase64Map) {
+        const [id, keyBase64] = id_key_pair;
 
-// Decrypt encrypted base64 RSA private key using AES-GCM
-export async function decryptKey(encryptedKeyBase64: string): Promise<CryptoKey> {
-    const base64EncryptionKey: string = import.meta.env.VITE_ENCRYPTION_KEY;
-    const encryptionKey: CryptoKey = await importAESKey(base64EncryptionKey);
-    const encryptedData: Uint8Array = base64ToUint8Array(encryptedKeyBase64);
+        const keyData = base64ToArrayBuffer(keyBase64);
 
-    const iv: Uint8Array = encryptedData.slice(0, 12); // Extract IV
-    const encryptedKey: Uint8Array = encryptedData.slice(12); // Extract encrypted key
+        const publicKey = await window.crypto.subtle.importKey(
+            'spki',
+            keyData,
+            {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            },
+            true,
+            ['encrypt']
+        );
 
-    // Decrypt the key using AES-GCM
-    const decryptedKeyBuffer: ArrayBuffer = await crypto.subtle.decrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv // Initialization vector
-        },
-        encryptionKey,
-        encryptedKey // Data to decrypt
-    );
+        // Encrypt the AES key with the participant's RSA public key
+        const encryptedAESKey = await window.crypto.subtle.encrypt(
+            { name: "RSA-OAEP" },
+            publicKey,
+            exportedKey
+        );
+        const encryptedAESKeyBase64 = arrayBufferToBase64(encryptedAESKey);
+        encryptedAESKeys.set(id, encryptedAESKeyBase64);
+    }
 
-    // Import the decrypted key for further usage
-    const decryptedKey = await crypto.subtle.importKey(
-        'pkcs8', // Format for RSA private keys
-        decryptedKeyBuffer,
-        {
-            name: 'RSA-OAEP',
-            hash: 'SHA-256'
-        },
-        true,
-        ['decrypt'] // Usages
-    );
-    return decryptedKey;
+    return { encryptedAESKeys };
 }
 
 // Utility functions
@@ -164,4 +140,17 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
         binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
+}
+
+export async function cryptoKeyToBase64(key: CryptoKey): Promise<string> {
+    const format: "pkcs8" | "spki" | "raw" = key.type === 'private' 
+        ? "pkcs8" 
+        : key.type === 'public' 
+            ? "spki" 
+            : "raw"; // For symmetric keys (like AES)
+
+    const exportedKey: ArrayBuffer = await crypto.subtle.exportKey(format, key);
+
+    // Directly convert ArrayBuffer to base64 (no need to wrap in Uint8Array before)
+    return arrayBufferToBase64(exportedKey);
 }

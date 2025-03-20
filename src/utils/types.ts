@@ -10,6 +10,7 @@ export interface User {
   _id: string;
   username: string;
   avatar: string;
+  email?: string;
 }
 
 export interface Message {
@@ -24,10 +25,10 @@ export interface DecryptedMessage extends Omit<Message, 'message'> {
   message: string;
 }
 
-export interface SocketMessage extends Omit<Message, 'message'> {
+export interface SocketMessage extends Omit<Message, 'sender'> {
   chat_id: string;
+  sender: User;
   receiver: User;
-  message: string;
 }
 
 export interface DecryptedSocketMessage extends Omit<SocketMessage, 'message'> {
@@ -89,6 +90,42 @@ export interface JWTPayload extends JwtPayload {
 }
 
 export interface Keys {
-  user_id: string, 
+  user_id: string,
   publicKey: string
 }
+
+// API Responses
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export type RegisterResponse = ApiResponse<{ message: string }>;
+
+export type LoginResponse = ApiResponse<{ message: string; accessToken: string }>;
+
+export interface UserChatsResponse extends ApiResponse<{
+  individualChats: IndividualChat[];
+  groupChats: GroupChat[];
+}> {}
+
+export interface SendMessageResponse extends ApiResponse<{
+  _id: string;
+  message: string;
+  sender: string;
+  chat_id: string;
+  chat_type: "individual" | "group";
+  created_at: string;
+  updated_at: string;
+}> {}
+
+export interface ChatDetailsResponse extends ApiResponse<{
+  chat_id: string;
+  type: "individual" | "group";
+  participant1: User;
+  participant2: User;
+  messages: Message[];
+  created_at: string;
+}> {}
+

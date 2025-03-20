@@ -1,62 +1,9 @@
-import { Link, Form, useLoaderData, useActionData, useNavigation, Navigation, redirect } from "react-router-dom"
-import { loginUser } from "../lib/api"
+import { Link, Form, useLoaderData, useActionData, useNavigation, Navigation } from "react-router-dom"
 import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
-import { AuthState, JWTPayload } from "@/utils/types";
-import { login } from "@/rtk/slices/authSlice";
-import { jwtDecode } from "jwt-decode";
-import { store } from "@/rtk/store";
 import { useAuth0 } from "@auth0/auth0-react";
-import { storeKey } from "@/lib/helpers";
-
-
-export async function loader({ request }: { request: Request }) {
-    const url: URL = new URL(request.url)
-    const searchParams: (string | null) = url.searchParams.get('message')
-    return searchParams
-}
-
-export async function action({ request }: { request: Request }) {
-
-    try {
-        const pathname: string = new URL(request.url).searchParams.get("redirectTo") || '/'
-        const form: FormData = await request.formData()
-
-        const email: (FormDataEntryValue | null) = form.get('email')
-        const password: (FormDataEntryValue | null) = form.get('password')
-
-        const res = await loginUser({ email, password })
-        //decode the token
-        const decoded: JWTPayload = jwtDecode(res.accessToken)
-
-        const authData: AuthState = {
-            userId: decoded.UserInfo._id,
-            email: decoded.UserInfo.email,
-            username: decoded.UserInfo.username,
-            accessToken: res.accessToken,
-        }
-
-
-        //store the data in the store
-        store.dispatch(login(authData))
-
-        localStorage.setItem("loggedin", JSON.stringify(authData))
-
-        // get public key from DB
-        const encryptedBase64PrivateKey: string = res.data2; // encrypted
-
-        // Store private key in IndexedDB as data2
-        await storeKey(encryptedBase64PrivateKey, 'data2');
-
-        return redirect(pathname)
-
-    } catch (error: any) {
-        return error.message
-    }
-
-}
 
 export default function Login() {
 

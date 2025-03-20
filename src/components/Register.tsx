@@ -1,56 +1,8 @@
-import { Link, Form, redirect, useActionData, useNavigation, Navigation } from "react-router-dom"
-import { registerUser } from "../lib/api"
+import { Link, Form, useActionData, useNavigation, Navigation } from "react-router-dom"
 import { BiSolidError } from "react-icons/bi"
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
-import { generateKeyPair } from "@/lib/helpers";
-
-export async function action({ request }: { request: Request }) {
-  try {
-    const formdata: FormData = await request.formData()
-
-    const username: string = formdata.get('username')?.toString() || ''
-    const email: string = formdata.get('email')?.toString() || ''
-    const password1: string = formdata.get('password1')?.toString() || ''
-    const password2: string = formdata.get('password2')?.toString() || ''
-
-
-    if (password1 !== password2)
-      throw new Error("Passwords should match")
-
-    const passwordSpecial = /[@#$%^&*()!+-]/;
-
-    if (!passwordSpecial.test(password1))
-      throw new Error("Password should contain at least one special character.")
-
-    const passwordLower = /[a-z]/;
-
-    if (!passwordLower.test(password1))
-      throw new Error("Password should contain at least one lowercase character.")
-
-    const passwordUpper = /[A-Z]/;
-
-    if (!passwordUpper.test(password1))
-      throw new Error("Password should contain at least one uppercase character.")
-
-    const passwordDigit = /[0-9]/;
-
-    if (!passwordDigit.test(password1))
-      throw new Error("Password should contain at least one digit.")
-
-    // generate keypair after successful login
-    const {publicKey, privateKey}: CryptoKeyPair = await generateKeyPair();
-
-    await registerUser({ username, email, password: password1, publicKey, privateKey }) // not encrypting private key right now.
-
-    return redirect('/login')
-
-  } catch (error: any) {
-    return error.message
-  }
-}
-
 
 export default function Register() {
   const error: any = useActionData()

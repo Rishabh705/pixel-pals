@@ -1,4 +1,5 @@
-import { encryptKey, uint8ArrayToBase64 } from './helpers';
+import { ChatDetailsResponse, LoginResponse, RegisterResponse, SendMessageResponse, User, UserChatsResponse } from '@/utils/types';
+import { cryptoKeyToBase64, encryptSymmetricKey } from './helpers';
 import { AuthenticatedFetch } from './jwt';
 
 // fetch search results
@@ -6,7 +7,7 @@ const url = import.meta.env.VITE_SERVER
 
 //authentication
 
-export async function loginUser(formdata: { email: (FormDataEntryValue | null), password: (FormDataEntryValue | null) }): Promise<any> {
+export async function loginUser(formdata: { email: (FormDataEntryValue | null), password: (FormDataEntryValue | null) }): Promise<LoginResponse> {
     const res: Response = await fetch(`${url}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -20,7 +21,7 @@ export async function loginUser(formdata: { email: (FormDataEntryValue | null), 
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to login. Please Try again.",
+            message: data.error.message || "Failed to login. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -35,17 +36,10 @@ export async function registerUser(
         email: string,
         password: string,
         publicKey: CryptoKey,
-        privateKey: CryptoKey,
     }
-): Promise<any> {
+): Promise<RegisterResponse> {
 
-    const encryptedPrivateKey64: string = await encryptKey(formdata.privateKey); //WORKING
-    const exportedPublicKey: ArrayBuffer = await crypto.subtle.exportKey('spki', formdata.publicKey);
-
-    const publicKeyArrayBuffer: Uint8Array = new Uint8Array(exportedPublicKey);
-
-    // Convert ArrayBuffer to base64 for JSON serialization
-    const publicKeyBase64: string = uint8ArrayToBase64(publicKeyArrayBuffer);
+    const publicKeyBase64: string = await cryptoKeyToBase64(formdata.publicKey);
 
     const res: Response = await fetch(`${url}/api/auth/register/`, {
         method: 'POST',
@@ -54,8 +48,7 @@ export async function registerUser(
         },
         body: JSON.stringify({
             ...formdata,
-            data1: publicKeyBase64,  // don't encrypted public key
-            data2: encryptedPrivateKey64  // Encrypted private key
+            publicKey: publicKeyBase64,  // don't encrypt public key
         })
     })
 
@@ -63,7 +56,7 @@ export async function registerUser(
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to register. Please Try agian.",
+            message: data.error.message || "Failed to register. Please Try agian.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -72,7 +65,7 @@ export async function registerUser(
     return data
 }
 
-export async function logoutUser(): Promise<any> {
+export async function logoutUser(): Promise<{ message: string }> {
     const res: Response = await fetch(`${url}/api/auth/logout`, {
         credentials: 'include'
     });
@@ -88,8 +81,8 @@ export async function logoutUser(): Promise<any> {
     return { message: "Logged out" };
 }
 
-//chats
-export async function getChats(userID: string, token: string): Promise<any> {
+
+export async function getPublicKey(email: string, token: string): Promise<string> {
 
     const options = {
         headers: {
@@ -97,13 +90,36 @@ export async function getChats(userID: string, token: string): Promise<any> {
             'Authorization': `Bearer ${token}`
         }
     }
-    const res: Response = await AuthenticatedFetch(`${url}/api/chats?userID=${userID}`, options, token)
+    const res: Response = await AuthenticatedFetch(`${url}/api/auth/public-key?email=${email}`, options, token)
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw {
+            message: data.error.message || "Failed to fetch your chats. Refresh the page",
+            statusText: res.statusText,
+            status: res.status,
+        }
+    }
+
+    return data.data.publicKey
+}
+
+//chats
+export async function getChats(token: string): Promise<UserChatsResponse> {
+
+    const options = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    }
+    const res: Response = await AuthenticatedFetch(`${url}/api/chats`, options, token)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to fetch your chats. Refresh the page",
+            message: data.error.message || "Failed to fetch your chats. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -112,7 +128,7 @@ export async function getChats(userID: string, token: string): Promise<any> {
     return data
 }
 
-export async function getChat(chatID: string, token: string): Promise<any> {
+export async function getChat(chatID: string, token: string): Promise<ChatDetailsResponse> {
     const options = {
         headers: {
             'Content-Type': 'application/json',
@@ -126,7 +142,7 @@ export async function getChat(chatID: string, token: string): Promise<any> {
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to fetch this chat. Refresh the page",
+            message: data.error.message || "Failed to fetch this chat. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -135,7 +151,8 @@ export async function getChat(chatID: string, token: string): Promise<any> {
     return data
 }
 
-export async function createChat(token: string, receiverID: string): Promise<any> {
+export async function createChat(token: string, receiverID: string, publicKeysBase64Map: Map<string, string>): Promise<{_id:string}> {
+    const { encryptedAESKeys } = await encryptSymmetricKey(publicKeysBase64Map);
     const options = {
         method: 'POST',
         headers: {
@@ -143,7 +160,8 @@ export async function createChat(token: string, receiverID: string): Promise<any
             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-            receiverID: receiverID
+            receiverID: receiverID,
+            aesKeys: Object.fromEntries(encryptedAESKeys),
         })
     }
     const res: Response = await AuthenticatedFetch(`${url}/api/chats/one-on-one`, options, token)
@@ -152,7 +170,7 @@ export async function createChat(token: string, receiverID: string): Promise<any
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to create chat. Please Try again.",
+            message: data.error.message || "Failed to create chat. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -162,7 +180,7 @@ export async function createChat(token: string, receiverID: string): Promise<any
 }
 
 
-export async function addContact(token: string, email: string): Promise<any> {
+export async function addContact(token: string, email: string): Promise<User[]> {
     const options = {
         method: 'POST',
         headers: {
@@ -179,7 +197,7 @@ export async function addContact(token: string, email: string): Promise<any> {
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to create contact. Please Try again.",
+            message: data.error.message || "Failed to create contact. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -188,20 +206,20 @@ export async function addContact(token: string, email: string): Promise<any> {
     return data.data
 }
 
-export async function getContacts(userID: string, token: string): Promise<any> {
+export async function getContacts(token: string): Promise<User[]> {
     const options = {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         },
     }
-    const res: Response = await AuthenticatedFetch(`${url}/api/contacts?userId=${userID}`, options, token)
+    const res: Response = await AuthenticatedFetch(`${url}/api/contacts`, options, token)
 
     const data = await res.json()
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to fecth your contacts. Refresh the page",
+            message: data.error.message || "Failed to fecth your contacts. Refresh the page",
             statusText: res.statusText,
             status: res.status,
         }
@@ -211,7 +229,7 @@ export async function getContacts(userID: string, token: string): Promise<any> {
 }
 
 
-export async function sendMessage(message: string, token: string, messageID: string, chatID?: string): Promise<any> {
+export async function sendMessage(message: string, token: string, messageID: string, chatID?: string): Promise<SendMessageResponse> {
 
     let method = 'POST'
 
@@ -236,7 +254,7 @@ export async function sendMessage(message: string, token: string, messageID: str
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to send message. Please Try again.",
+            message: data.error.message || "Failed to send message. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
@@ -246,7 +264,7 @@ export async function sendMessage(message: string, token: string, messageID: str
 
 }
 
-export async function addGroup(token: string, name: string, description: string, members: FormDataEntryValue[]): Promise<any> {
+export async function addGroup(token: string, name: string, description: string, members: FormDataEntryValue[], encryptedAESKeys: Map<string, string>): Promise<{_id:string}> {
 
     const options = {
         method: 'POST',
@@ -258,6 +276,7 @@ export async function addGroup(token: string, name: string, description: string,
             name: name,
             description: description,
             members: members,
+            aesKeys: Object.fromEntries(encryptedAESKeys),
         })
     }
     const res: Response = await AuthenticatedFetch(`${url}/api/chats/group`, options, token)
@@ -266,12 +285,12 @@ export async function addGroup(token: string, name: string, description: string,
 
     if (!res.ok) {
         throw {
-            message: data.message || "Failed to create group. Please Try again.",
+            message: data.error.message || "Failed to create group. Please Try again.",
             statusText: res.statusText,
             status: res.status,
         }
     }
-
+    console.log(data);
     return data
 }
 

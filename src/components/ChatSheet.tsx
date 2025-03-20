@@ -13,7 +13,7 @@ import ChatCard from "@/components/ChatCard";
 import { cn } from "@/lib/utils";
 
 
-export default function ChatSheet({ error, data, className }: { error: any; data: any; className?: string }) {
+export default function ChatSheet({ error, data, className }: { error: any; data: {data:Promise<ChatData>, contacts:Promise<User[]>}; className?: string }) {
     const [searchText, setSearchText] = useState<string>("");
     const username: (string | null) = useAppSelector((state) => state.auth.username);
     const email: (string | null) = useAppSelector((state) => state.auth.email);

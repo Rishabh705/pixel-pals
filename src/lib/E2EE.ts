@@ -1,20 +1,39 @@
-import { base64ToArrayBuffer, decryptKey, getKey, uint8ArrayToBase64 } from "./helpers";
+import { arrayBufferToBase64, base64ToArrayBuffer, getKey } from "./helpers";
 
 // Load Private Key from IndexedDB
 let cachedPrivateKey: CryptoKey | null = null;
 
 export async function loadPrivateKey(): Promise<CryptoKey> {
     if (cachedPrivateKey) {
-        return cachedPrivateKey; // Return cached private key if available
+        return cachedPrivateKey; // Return cached private key if already cached
     }
 
-    // Retrieve and decrypt the private key from IndexedDB
-    const encryptedPrivateKey: string = await getKey('data2');
-    const decryptedPrivateKey: CryptoKey = await decryptKey(encryptedPrivateKey);
+    try {
+        const privateKeyBase64: string = await getKey('privateKey');
 
-    cachedPrivateKey = decryptedPrivateKey; // Cache the private key for future use
-    return cachedPrivateKey;
+        const keyBuffer: ArrayBuffer = base64ToArrayBuffer(privateKeyBase64);
+
+        const privateKey: CryptoKey = await window.crypto.subtle.importKey(
+            'pkcs8', // Format for private key
+            keyBuffer,
+            {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            },
+            true, // extractable
+            ['decrypt'] // key usages
+        );
+
+        // Cache it for future use
+        cachedPrivateKey = privateKey;
+
+        return privateKey;
+    } catch (err) {
+        console.error("Failed to load private key from IndexedDB:", err);
+        throw new Error("Private key not found or corrupted.");
+    }
 }
+
 
 // Decrypt the AES key using the private RSA key
 async function decryptSymmetricKey(encryptedAESKeyBase64: string): Promise<CryptoKey> {
@@ -22,7 +41,7 @@ async function decryptSymmetricKey(encryptedAESKeyBase64: string): Promise<Crypt
     const encryptedAESKeyBuffer: ArrayBuffer = base64ToArrayBuffer(encryptedAESKeyBase64);
 
     try {
-        // Decrypt using the private key
+        // Decrypt using the private RSA key
         const decryptedAESKey: ArrayBuffer = await crypto.subtle.decrypt(
             { name: "RSA-OAEP" },
             privateKey,
@@ -38,11 +57,11 @@ async function decryptSymmetricKey(encryptedAESKeyBase64: string): Promise<Crypt
             ["encrypt", "decrypt"]
         );
     } catch (error) {
-        console.error("Decryption failed for an AES key, checking for further keys", error);
+        console.error("Decryption failed for AES key:", error);
+        throw new Error("Failed to decrypt AES key.");
     }
-
-    throw new Error("Failed to decrypt any AES key with the provided private key.");
 }
+
 
 
 // Encrypt a message with an AES-GCM symmetric key
@@ -59,7 +78,7 @@ export async function encryptData(data: string, encryptedAESKeyBase64: string): 
     );
 
     const combined: Uint8Array = new Uint8Array([...iv, ...new Uint8Array(encryptedMessage)]);
-    return uint8ArrayToBase64(combined);
+    return arrayBufferToBase64(combined);
 }
 
 // Decrypt the message

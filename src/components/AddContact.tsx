@@ -22,7 +22,6 @@ export default function AddContact({ error }: { error: { message: string, succes
     const actionData: any = useActionData()
 
     useEffect(() => {
-        // console.log("action data for add contacts: ", actionData);
         if (actionData?.success) {
             setOpen(false)
         }
@@ -46,8 +45,8 @@ export default function AddContact({ error }: { error: { message: string, succes
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-right">
-                                Email
+                            <Label htmlFor="email">
+                                Receiver ID
                             </Label>
                             <Input name="email" className="col-span-3" required/>
                         </div>

@@ -19,7 +19,7 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 
 
-export function AddGroup({ error, contacts }: { error: {message:string, success:boolean, contact?: boolean, group?:boolean}, contacts: any }) {
+export function AddGroup({ error, contacts }: { error: { message: string, success: boolean, contact?: boolean, group?: boolean }, contacts: Promise<User[]> }) {
     const [searchText, setSearchText] = React.useState<string>("");
     const [open, setOpen] = React.useState<boolean>(false)
     const [members, setMembers] = React.useState<string[]>([]);
@@ -27,7 +27,6 @@ export function AddGroup({ error, contacts }: { error: {message:string, success:
     const actionData: any = useActionData()
 
     React.useEffect(() => {
-        // console.log("action data for add group: ", actionData);
         if (actionData?.success) {
             setOpen(false)
         }
@@ -37,15 +36,17 @@ export function AddGroup({ error, contacts }: { error: {message:string, success:
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = e.target;
-
+        const parsed = JSON.parse(value); // { id, email }
+    
         setMembers((prev) => {
             if (checked) {
-                return [...prev, value]; // Add contact ID if checked
+                return [...prev, value]; // Add JSON string
             } else {
-                return prev.filter((id) => id !== value); // Remove contact ID if unchecked
+                return prev.filter((m) => JSON.parse(m).id !== parsed.id); // Remove by id
             }
         });
-    }
+    };
+    
 
     const renderContacts = (contacts: User[]) => {
         const contactCard: JSX.Element[] = contacts
@@ -57,10 +58,11 @@ export function AddGroup({ error, contacts }: { error: {message:string, success:
                             <input
                                 type="checkbox"
                                 name="members"
-                                value={contact._id}
-                                checked={members.includes(contact._id)}
+                                value={JSON.stringify({ id: contact._id, email: contact.email })}
+                                checked={members.some((m) => JSON.parse(m).id === contact._id)}
                                 onChange={handleInputChange}
                             />
+
                             <CustomCard avatarImg={contact.avatar} avatarFallback={contact.username} title={contact.username} subtitle="Status" />
                         </div>
                         <Separator />
@@ -91,7 +93,7 @@ export function AddGroup({ error, contacts }: { error: {message:string, success:
                     <DialogHeader>
                         <DialogTitle>Create Group</DialogTitle>
                         <DialogDescription>
-                            Select the members from below. Click save when you're done.
+                            Select the members from below. Click submit when you're done.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">

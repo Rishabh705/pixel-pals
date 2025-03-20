@@ -13,13 +13,14 @@ import { CiSearch } from "react-icons/ci";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/utils/types";
 
-import { createChat } from "@/lib/api";
+import { createChat, getPublicKey } from "@/lib/api";
 import { useAppSelector } from "@/rtk/hooks";
 import { useNavigate, Await } from "react-router-dom";
 import CustomCard from "./CustomCard";
 import { Skeleton } from "./ui/skeleton";
 import { AddGroup } from "./AddGroup";
 import AddContact from "./AddContact";
+import { getKey } from "@/lib/helpers";
 
 
 export default function NewChat({ contacts, error, className }: { contacts: any, error:  {message:string, success:boolean}, className?: string }) {
@@ -27,13 +28,34 @@ export default function NewChat({ contacts, error, className }: { contacts: any,
   const [open, setOpen] = React.useState<boolean>(false)
   const token = useAppSelector((state) => state.auth.accessToken)
   const navigate = useNavigate()
+  const userId: string|null = useAppSelector((state) => state.auth.userId)
 
   const createOneonOneChat = async (contact: User) => {
-    if (!token) throw new Error("User not authenticated.");
-    const res = await createChat(token, contact._id); 
+    if (!token || !userId) throw new Error("User not authenticated.");
+    
+    if (!contact.email) {
+      throw new Error("Email of receiver is missing.");
+    }
+    // Fetch sender public key from IndexedDB AND receiver public key from server in parallel
+    const [senderPublicKey, recieverPublicKey] = await Promise.all([
+        getKey("publicKey"),
+        getPublicKey(contact.email, token)
+    ]);
+
+    if (!senderPublicKey) throw new Error("Sender public key not found");
+    if (!recieverPublicKey) throw new Error("Receiver public key not found");
+
+    // Prepare members keys
+    const membersKeys = new Map<string, string>();
+    membersKeys.set(contact._id, recieverPublicKey);
+    membersKeys.set(userId, senderPublicKey);
+
+    // Create chat
+    const res = await createChat(token, contact._id, membersKeys);
     setOpen(false);
     navigate(`/chats/${res._id}?re=${contact._id}&name=${contact.username}&type=individual`);
-  };
+};
+
 
   const renderContacts = (contacts: User[]) => {
 

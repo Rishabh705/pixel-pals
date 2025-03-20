@@ -6,10 +6,8 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet"
-// import { IoMdHeart } from "react-icons/io";
 import { LuLogOut } from "react-icons/lu"
 import { Link, NavigateFunction, useNavigate } from "react-router-dom"
-// import { buttonVariants } from "./ui/button";
 import SpecialButton from "./SpecialButton";
 import Hamburger from './Hamburger';
 import { logoutUser } from "@/lib/api";
@@ -44,8 +42,12 @@ export default function Profile() {
             localStorage.removeItem('loggedin')            
             navigate('/');
         }
-        catch(error: any){
-            console.error(error.message)
+        catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error(error.message);
+            } else {
+                console.error("An unknown error occurred", error);
+            }
         }
     }
     return (
