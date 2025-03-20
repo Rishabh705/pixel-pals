@@ -52,7 +52,7 @@ export default function Login() {
                     </section>
                 )}
                 <section className="py-2 px-3 rounded-full bg-gradient-to-r from-blue-300 to-blue-800">
-                    <em className="text-sm text-center text-white">Deployed on Free Tier, so increased response time may be experienced</em>
+                    <em className="text-sm text-center text-white">New Users first create an account to get key</em>
                 </section>
                 <section className="text-xs text-center p-2">
                     <span>Or Signin Using</span>
